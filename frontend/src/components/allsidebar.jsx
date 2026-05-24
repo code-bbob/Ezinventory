@@ -346,7 +346,7 @@ export default function Sidebar() {
                   setIsOpen(false)
                 }}
               >
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 via-fuchsia-300 to-pink-300 drop-shadow-sm">Aama Ko Nana</span>
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 via-fuchsia-300 to-pink-300 drop-shadow-sm">Ezinventory</span>
               </div>
               {userName && (
                 <div className="text-center mb-4 text-sm text-slate-300">
