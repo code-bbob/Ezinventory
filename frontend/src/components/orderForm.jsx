@@ -1,0 +1,512 @@
+"use client";
+import React, { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import Sidebar from "@/components/allsidebar";
+import useAxios from "@/utils/useAxios";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { PlusCircle, Trash2, ArrowLeft, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+// Order Form replicates look & feel of purchase form but tailored to Order model
+function OrderForm() {
+  const { branchId } = useParams();
+  const navigate = useNavigate();
+  const api = useAxios();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  const [formData, setFormData] = useState({
+    bill_no: "",
+    customer_name: "",
+    customer_phone: "",
+    branch: branchId,
+    enterprise: null, // set on submit via backend expected enterprise from token, but keep for clarity
+    total_amount: "",
+    advance_received: "",
+    advance_method: "cash",
+    cash_advance: "",
+    online_advance: "",
+    card_advance: "",
+    status: "pending",
+    due_date: "",
+  items: [ { item: "", image: null, preview: null } ] // include preview for UX
+  });
+
+  // Generic change handler
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelect = (name, value) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Order items handlers
+  const handleOrderItemChange = (index, e) => {
+    const { name, value } = e.target;
+    setFormData(prev => {
+      const clone = { ...prev };
+      clone.items = clone.items.map((it, i) => i === index ? { ...it, [name]: value } : it);
+      return clone;
+    });
+  };
+
+  const addOrderItem = () => {
+    setFormData(prev => ({ ...prev, items: [...prev.items, { item: "", image: null, preview: null }] }));
+  };
+
+  const removeOrderItem = (index) => {
+    setFormData(prev => ({ ...prev, items: prev.items.filter((_, i) => i !== index) }));
+  };
+
+  const handleImageChange = (index, e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData(prev => ({
+        ...prev,
+        items: prev.items.map((it,i)=> {
+          if(i===index){
+            if(it.preview) URL.revokeObjectURL(it.preview)
+            return { ...it, image: file, preview: URL.createObjectURL(file) }
+          }
+          return it
+        })
+      }));
+    }
+  };
+
+  const clearImage = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      items: prev.items.map((it,i)=> {
+        if(i===index){
+          if(it.preview) URL.revokeObjectURL(it.preview)
+          return { ...it, image: null, preview: null }
+        }
+        return it
+      })
+    }));
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    try {
+      // Check if any items have images
+      const hasImages = formData.items.some(item => item.image);
+      
+      // Calculate advance fields based on payment method
+      let cashAdvance = 0;
+      let onlineAdvance = 0;
+      let cardAdvance = 0;
+      
+      if (formData.advance_method === 'cash') {
+        cashAdvance = parseFloat(formData.advance_received) || 0;
+      } else if (formData.advance_method === 'online') {
+        onlineAdvance = parseFloat(formData.advance_received) || 0;
+      } else if (formData.advance_method === 'card') {
+        cardAdvance = parseFloat(formData.advance_received) || 0;
+      } else if (formData.advance_method === 'mixed') {
+        cashAdvance = parseFloat(formData.cash_advance) || 0;
+        onlineAdvance = parseFloat(formData.online_advance) || 0;
+        cardAdvance = parseFloat(formData.card_advance) || 0;
+      }
+      
+      if (hasImages) {
+        // Use FormData if images are being uploaded
+        const formDataToSend = new FormData();
+        
+        // Append main order fields
+        formDataToSend.append('bill_no', formData.bill_no);
+        formDataToSend.append('customer_name', formData.customer_name);
+        formDataToSend.append('customer_phone', formData.customer_phone);
+        formDataToSend.append('status', formData.status);
+        formDataToSend.append('total_amount', formData.total_amount);
+        formDataToSend.append('advance_received', formData.advance_received);
+        formDataToSend.append('advance_method', formData.advance_method);
+        formDataToSend.append('cash_advance', cashAdvance);
+        formDataToSend.append('online_advance', onlineAdvance);
+        formDataToSend.append('card_advance', cardAdvance);
+        formDataToSend.append('due_date', formData.due_date);
+        formDataToSend.append('branch', branchId);
+        
+        // Append items
+        formData.items.forEach((item, index) => {
+          formDataToSend.append(`items[${index}]item`, item.item);
+          if (item.image) {
+            formDataToSend.append(`items[${index}]image`, item.image);
+          }
+        });
+
+        await api.post(`order/branch/${branchId}/`, formDataToSend, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+      } else {
+        // Regular JSON submission if no images
+        const payload = { 
+          ...formData, 
+          branch: branchId,
+          cash_advance: cashAdvance,
+          online_advance: onlineAdvance,
+          card_advance: cardAdvance
+        };
+        await api.post(`order/branch/${branchId}/`, payload);
+      }
+      
+      navigate(`/orders/branch/${branchId}`);
+    } catch (err) {
+      console.error('Error details:', err.response?.data);
+      setError("Failed to create order");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleWheel = (e) => {
+    e.target.blur();
+  };
+
+  return (
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
+      <Sidebar className="hidden lg:block w-64 flex-shrink-0" />
+      <div className="flex-grow p-4 lg:p-6 lg:ml-64 overflow-auto">
+        <div className="max-w-4xl mx-auto">
+          <Button
+            onClick={() => navigate("/")}
+            variant="outline"
+            className="mb-6 px-4 py-2 text-black border-white hover:bg-gray-700 hover:text-white"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Dashboard
+          </Button>
+
+          <div className="bg-slate-800 p-6 rounded-lg shadow-lg">
+            <h2 className="text-2xl lg:text-3xl font-bold mb-6 text-white">
+              Add Order
+            </h2>
+            {error && <p className="text-red-400 mb-4">{error}</p>}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="flex flex-col md:col-span-1">
+                  <Label
+                    htmlFor="bill_no"
+                    className="text-sm font-medium text-white mb-2"
+                  >
+                    Bill No
+                  </Label>
+                  <Input
+                    type="text"
+                    id="bill_no"
+                    name="bill_no"
+                    placeholder="Enter bill number"
+                    value={formData.bill_no}
+                    onChange={handleChange}
+                    className="bg-slate-700 border-slate-600 text-white focus:ring-purple-500 focus:border-purple-500"
+                    required
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <Label
+                    htmlFor="customer_name"
+                    className="text-sm font-medium text-white mb-2"
+                  >
+                    Customer Name
+                  </Label>
+                  <Input
+                    type="text"
+                    id="customer_name"
+                    name="customer_name"
+                    placeholder="Enter customer name"
+                    value={formData.customer_name}
+                    onChange={handleChange}
+                    className="bg-slate-700 border-slate-600 text-white focus:ring-purple-500 focus:border-purple-500"
+                    required
+                  />
+                </div>
+
+                <div className="flex flex-col">
+                  <Label
+                    htmlFor="customer_phone"
+                    className="text-sm font-medium text-white mb-2"
+                  >
+                    Customer Phone
+                  </Label>
+                  <Input
+                    type="text"
+                    id="customer_phone"
+                    name="customer_phone"
+                    placeholder="Enter customer phone"
+                    value={formData.customer_phone}
+                    onChange={handleChange}
+                    className="bg-slate-700 border-slate-600 text-white focus:ring-purple-500 focus:border-purple-500"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex flex-col">
+                  <Label
+                    htmlFor="due_date"
+                    className="text-sm font-medium text-white mb-2"
+                  >
+                    Delivery Date
+                  </Label>
+                  <Input
+                    type="date"
+                    id="due_date"
+                    name="due_date"
+                    value={formData.due_date}
+                    onChange={handleChange}
+                    className="bg-slate-700 border-slate-600 text-white focus:ring-purple-500 focus:border-purple-500"
+                  />
+                </div>
+
+                <div className="flex flex-col">
+                  <Label
+                    htmlFor="status"
+                    className="text-sm font-medium text-white mb-2"
+                  >
+                    Status
+                  </Label>
+                  <Select value={formData.status} onValueChange={v => handleSelect('status', v)}>
+                    <SelectTrigger className="w-full bg-slate-700 border-slate-600 text-white">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-800 border-slate-700">
+                      <SelectItem value="pending" className="text-white">Pending</SelectItem>
+                      <SelectItem value="prepared" className="text-white">Prepared</SelectItem>
+                      <SelectItem value="dispatched" className="text-white">Dispatched</SelectItem>
+                      <SelectItem value="completed" className="text-white">Completed</SelectItem>
+                      {/* <SelectItem value="canceled" className="text-white">Canceled</SelectItem> */}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex flex-col">
+                  <Label
+                    htmlFor="total_amount"
+                    className="text-sm font-medium text-white mb-2"
+                  >
+                    Total Amount
+                  </Label>
+                  <Input
+                    type="number"
+                    id="total_amount"
+                    name="total_amount"
+                    onWheel={handleWheel}
+                    value={formData.total_amount}
+                    onChange={handleChange}
+                    className="bg-slate-700 border-slate-600 text-white focus:ring-purple-500 focus:border-purple-500"
+                    placeholder="Enter total amount"
+                  />
+                </div>
+
+                <div className="flex flex-col">
+                  <Label
+                    htmlFor="advance_received"
+                    className="text-sm font-medium text-white mb-2"
+                  >
+                    Advance Received
+                  </Label>
+                  <Input
+                    type="number"
+                    id="advance_received"
+                    name="advance_received"
+                    onWheel={handleWheel}
+                    value={formData.advance_received}
+                    onChange={handleChange}
+                    className="bg-slate-700 border-slate-600 text-white focus:ring-purple-500 focus:border-purple-500"
+                    placeholder="Enter amount received"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col">
+                <Label
+                  htmlFor="advance_method"
+                  className="text-sm font-medium text-white mb-2"
+                >
+                  Advance Method
+                </Label>
+                <Select value={formData.advance_method} onValueChange={v => handleSelect('advance_method', v)}>
+                  <SelectTrigger className="w-full bg-slate-700 border-slate-600 text-white">
+                    <SelectValue placeholder="Select method" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-700">
+                    <SelectItem value="cash" className="text-white">Cash</SelectItem>
+                    <SelectItem value="card" className="text-white">Card</SelectItem>
+                    <SelectItem value="online" className="text-white">Online Payment</SelectItem>
+                    <SelectItem value="mixed" className="text-white">Mixed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {formData.advance_method === 'mixed' && (
+                <div className="bg-slate-700 p-4 rounded-md">
+                  <h4 className="text-sm font-semibold text-white mb-3">Split Advance Payment</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="flex flex-col">
+                      <Label htmlFor="cash_advance" className="text-sm font-medium text-white mb-2">Cash</Label>
+                      <Input
+                        type="number"
+                        id="cash_advance"
+                        name="cash_advance"
+                        onWheel={handleWheel}
+                        value={formData.cash_advance}
+                        onChange={handleChange}
+                        className="bg-slate-600 border-slate-500 text-white focus:ring-purple-500 focus:border-purple-500"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <Label htmlFor="online_advance" className="text-sm font-medium text-white mb-2">Online</Label>
+                      <Input
+                        type="number"
+                        id="online_advance"
+                        name="online_advance"
+                        onWheel={handleWheel}
+                        value={formData.online_advance}
+                        onChange={handleChange}
+                        className="bg-slate-600 border-slate-500 text-white focus:ring-purple-500 focus:border-purple-500"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <Label htmlFor="card_advance" className="text-sm font-medium text-white mb-2">Card</Label>
+                      <Input
+                        type="number"
+                        id="card_advance"
+                        name="card_advance"
+                        onWheel={handleWheel}
+                        value={formData.card_advance}
+                        onChange={handleChange}
+                        className="bg-slate-600 border-slate-500 text-white focus:ring-purple-500 focus:border-purple-500"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-3 flex justify-between text-sm text-slate-300">
+                    <span>Total Split:</span>
+                    <span className="font-mono">
+                      {((parseFloat(formData.cash_advance)||0) + (parseFloat(formData.online_advance)||0) + (parseFloat(formData.card_advance)||0)).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <h3 className="text-xl font-semibold mb-2 text-white">
+                Order Items
+              </h3>
+              {formData?.items?.map((item, index) => (
+                <div
+                  key={index}
+                  className="bg-slate-700 p-4 rounded-md shadow mb-4"
+                >
+                  <h4 className="text-lg font-semibold mb-4 text-white">
+                    Item {index + 1}
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                    {/* Left: inputs */}
+                    <div className="space-y-4">
+                      <div className="flex flex-col">
+                        <Label htmlFor={`item-${index}`} className="text-sm font-medium text-white mb-2">Item Description</Label>
+                        <Input
+                          type="text"
+                          id={`item-${index}`}
+                          name="item"
+                          value={item.item}
+                          onChange={(e) => handleOrderItemChange(index, e)}
+                          className="bg-slate-600 border-slate-500 text-white focus:ring-purple-500 focus:border-purple-500"
+                          placeholder="Describe the item"
+                          required
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <Label htmlFor={`image-${index}`} className="text-sm font-medium text-white mb-2">Upload / Change Image</Label>
+                        <Input
+                          type="file"
+                          id={`image-${index}`}
+                          name="image"
+                          accept="image/*"
+                          onChange={(e) => handleImageChange(index, e)}
+                          className="bg-slate-600 border-slate-500 text-white focus:ring-purple-500 focus:border-purple-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-purple-600 file:text-white hover:file:bg-purple-700"
+                        />
+                        <p className="text-[11px] mt-2 text-slate-400">PNG/JPG up to 2MB.</p>
+                      </div>
+                    </div>
+                    {/* Right: preview */}
+                    <div className="flex justify-center md:justify-end">
+                      <div className="relative group">
+                        {item.preview ? (
+                          <>
+                            <img
+                              src={item.preview}
+                              alt={`Preview ${index+1}`}
+                              className="h-40 w-40 md:h-48 md:w-48 object-cover rounded-lg border border-slate-600/70 shadow-md ring-1 ring-slate-600/40 group-hover:ring-purple-500/60 transition-all"
+                            />
+                            <button
+                              type="button"
+                              onClick={()=>clearImage(index)}
+                              className="absolute -top-2 -right-2 bg-slate-900/80 hover:bg-red-600 text-white rounded-full p-1 shadow"
+                              aria-label="Remove image"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </>
+                        ) : (
+                          <div className="h-40 w-40 md:h-48 md:w-48 flex flex-col items-center justify-center text-xs text-slate-400 bg-slate-800/60 rounded-lg border border-dashed border-slate-600">
+                            <span>No Image</span>
+                            <span className="mt-1 text-[10px] text-slate-500">(Preview)</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {formData.items.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="mt-4 bg-red-600 hover:bg-red-700 text-white"
+                      onClick={() => removeOrderItem(index)}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Remove Item
+                    </Button>
+                  )}
+                </div>
+              ))}
+
+              <Button
+                type="button"
+                onClick={addOrderItem}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                <PlusCircle className="w-4 h-4 mr-2" />
+                Add Another Item
+              </Button>
+
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
+              >
+                {submitting ? 'Submitting...' : 'Submit Order'}
+              </Button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+export default OrderForm;

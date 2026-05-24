@@ -1,0 +1,81 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('purchasetransaction/', views.PurchaseTransactionView.as_view(), name='purchase'),
+    path('purchasetransaction/branch/<int:branch>/', views.PurchaseTransactionView.as_view(), name='purchase'),
+    path('purchasetransaction/<int:pk>/', views.PurchaseTransactionView.as_view(), name='purchase'),
+    path('vendor/', views.VendorView.as_view(), name='vendor'),
+    path('vendor/branch/<int:branch>/', views.VendorView.as_view(), name='vendor'),
+    path('vendor/branch/<int:branch>/<int:pk>/', views.VendorView.as_view(), name='vendor_delete'),
+    path('vendor/<int:pk>/', views.VendorView.as_view(), name='vendor_detail'),
+    path('salestransaction/', views.SalesTransactionView.as_view(), name='sales'),
+    path('salestransaction/branch/<int:branch>/', views.SalesTransactionView.as_view(), name='sales'),
+    path('salestransaction/<int:pk>/', views.SalesTransactionView.as_view(), name='sales'),
+    path('vendortransaction/', views.VendorTransactionView.as_view(), name='vendortransactions'),
+    path('vendortransaction/branch/<int:branch>/', views.VendorTransactionView.as_view(), name='vendor'),
+    path('vendortransaction/<int:pk>/', views.VendorTransactionView.as_view(), name='vendortransactions'),
+    path('stats/', views.StatsView.as_view(), name='stat'),
+    path('stats/branch/<int:branch>/', views.StatsView.as_view(), name='stat'),
+
+    path('vendor/statement/<int:vendorId>/',views.VendorStatementView.as_view(), name = 'vendorstatement'),
+
+    path('purchase-return/',views.PurchaseReturnView.as_view(), name='purchasereturn'),
+    path('purchase-return/branch/<int:branch>/',views.PurchaseReturnView.as_view(), name='purchasereturn'),
+    path('purchase-return/<int:pk>/',views.PurchaseReturnView.as_view(), name='purchasereturn'),
+    path('sales-return/',views.SalesReturnView.as_view(), name='purchasereturn'),
+    path('sales-return/branch/<int:branch>/',views.SalesReturnView.as_view(), name='purchasereturn'),
+    path('sales-return/<int:pk>/',views.SalesReturnView.as_view(), name='purchasereturn'),
+    path('sales-report/',views.SalesReportView.as_view(), name='salesreport'),
+    path('sales-report/branch/<int:branch>/',views.SalesReportView.as_view(), name='salesreport'),
+    path('purchase-report/',views.PurchaseReportView.as_view(), name='purchasereport'),
+    path('purchase-report/branch/<int:branch>/',views.PurchaseReportView.as_view(), name='purchasereport'),
+    path('expenses-report/',views.ExpensesReportView.as_view(), name='expensesreport'),
+    path('expenses-report/branch/<int:branch>/',views.ExpensesReportView.as_view(), name='expensesreport'),
+    path('next-bill-no/',views.NextBillNo.as_view(), name='nextbillno'),
+    path('employeetransaction/',views.EmployeeTransactionView.as_view(), name='employeetransaction'),
+    path('employeetransaction/branch/<int:branch>/',views.EmployeeTransactionView.as_view(), name='employeetransaction'),
+    path('employeetransaction/employee/<int:employee_pk>/',views.EmployeeTransactionView.as_view(), name='employeetransaction'),
+    path('employeetransaction/<int:pk>/',views.EmployeeTransactionView.as_view(), name='employeetransaction'),
+
+    path('employee/',views.EmployeeView.as_view(), name='employee'),
+    path('employee/branch/<int:branchId>/',views.EmployeeView.as_view(), name='employee'),
+    path('customer/<int:pk>/',views.CustomerView.as_view(), name='customertotal'),
+    path('customer/',views.CustomerView.as_view(), name='customertotal'),
+    path('customers/', views.ListCustomerView.as_view(), name='list_customers'),
+    path('customers/lottery/', views.CustomerLotteryView.as_view(), name='customer_lottery'),
+    path('debtors/', views.DebtorsView.as_view(), name='debtors'),
+    path('debtors/branch/<int:branchId>/', views.DebtorsView.as_view(), name='debtors_branch'),
+    path('debtors/<int:pk>/', views.DebtorsView.as_view(), name='debtor_detail'),
+    path('debtortransaction/', views.DebtorTransactionView.as_view(), name='debtortransaction'),
+    path('debtortransaction/branch/<int:branch>/', views.DebtorTransactionView.as_view(), name='debtortransaction'),
+    path('debtortransaction/<int:pk>/', views.DebtorTransactionView.as_view(), name='debtortransaction'),
+
+    path('debtor/statement/<int:debtorId>/',views.DebtorStatementView.as_view(), name = 'debtorstatement'),
+
+    # Employee Statement
+    path('employee/statement/<int:employeeId>/', views.EmployeeStatementView.as_view(), name='employeestatement'),
+
+    path('product-transfer/', views.ProductTransferView.as_view(), name='product_transfer'),
+
+    path('expenses/', views.ExpensesView.as_view(), name='expenses'),
+    path('expenses/branch/<int:branch>/', views.ExpensesView.as_view(), name='expenses'),
+    path('expenses/<int:pk>/', views.ExpensesView.as_view(), name='expenses_detail'),  # pk handled in view.get
+    path('withdrawals/', views.WithdrawalView.as_view(), name='withdrawals'),
+    path('withdrawals/branch/<int:branch>/', views.WithdrawalView.as_view(), name='withdrawals'),
+    path('withdrawals/<int:pk>/', views.WithdrawalView.as_view(), name='withdrawal_detail'),
+    path('withdrawals-report/', views.WithdrawalReportView.as_view(), name='withdrawalsreport'),
+    path('withdrawals-report/branch/<int:branch>/', views.WithdrawalReportView.as_view(), name='withdrawalsreport'),
+
+    path('income-expense-report/', views.IncomeExpenseReportView.as_view(), name='incomeexpensereport'),
+    path('income-expense-report/branch/<int:branch>/', views.IncomeExpenseReportView.as_view(), name='incomeexpensereport'),
+    path('closing-cash/', views.ClosingCashView.as_view(), name='closingcash'),
+
+    # NCM endpoints (statement + transactions)
+    path('ncm/statement/', views.NCMReport.as_view(), name='ncmstatement'),
+    path('ncm/statement/branch/<int:branch>/', views.NCMReport.as_view(), name='ncmstatement'),
+
+    path('ncmtransaction/', views.NCMTransactionView.as_view(), name='ncmtransaction'),
+    path('ncmtransaction/branch/<int:branch>/', views.NCMTransactionView.as_view(), name='ncmtransaction'),
+    path('ncmtransaction/<int:pk>/', views.NCMTransactionView.as_view(), name='ncmtransaction'),
+]

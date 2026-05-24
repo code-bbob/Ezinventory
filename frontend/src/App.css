@@ -1,0 +1,42 @@
+/* Existing styles... */
+
+/* Print styles */
+@media print {
+  @page {
+    size: A4;
+    margin: 0.5cm;
+  }
+
+  body {
+    background-color: white !important;
+    color: black !important;
+  }
+
+  .print-hidden {
+    display: none !important;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+
+  th {
+    background-color: #f2f2f2;
+  }
+}
+
+/* Additional styles to prevent line breaks in table cells */
+.no-wrap {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+

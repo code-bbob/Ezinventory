@@ -1,0 +1,298 @@
+import { Route, Routes } from "react-router-dom";
+import "./App.css";
+import Login from "@/pages/login";
+import Signup from "@/pages/signup";
+import { useSelector } from "react-redux";
+import ProtectedRoute from "./redux/protectedRoute";
+import BranchProtectedRoute from "./redux/BranchProtectedRoute";
+import UserRegister from "@/pages/userRegister";
+import InitialBranchSelection from "@/pages/InitialBranchSelection";
+import AllLandingPage from "@/pages/allLandingPage";
+import CustomerLotteryPage from "@/pages/customer_lottery";
+import AllPurchaseTransactions from "@/pages/allPurchase";
+import AllPurchaseTransactionForm from "./components/allpurchasetransactionform";
+import EditAllPurchaseTransactionForm from "./components/editallpurchase";
+import AllManufactureTransactions from "@/pages/allManufacture";
+import AllManufactureTransactionForm from "./components/allmanufacturetransactionform";
+import EditAllManufactureForm from "./components/editallmanufacture";
+import {AllInventoryPageComponent} from "@/pages/allInventoryPage";
+import AllBrandProducts from "@/pages/allsinglebrand";
+import AllSalesTransactions from "@/pages/allSales";
+import AllSalesTransactionForm from "./components/allsalestransactionform";
+import useGlobalKeyPress from "./hooks/globalKeyPress";
+import AllVendorPage  from "@/pages/allvendors";
+import AllCustomersPage from "@/pages/allCustomers";
+import EditAllSalesTransactionForm from "./components/editallsales";
+import AllVendorTransactions from "@/pages/allvendortransactions";
+import AllVendorTransactionForm from "@/pages/allvendortransactionform";
+import EditAllVendorTransactionForm from "./components/editallvendortransactions";
+import AllSalesReport from "@/pages/allSalesReport";
+import AllPurchaseReport from "@/pages/allPurchaseReport";
+import AllPurchaseReturns from "@/pages/allPurchaseReturn";
+import InvoicePage from "@/pages/invoicePage";
+import EditProductForm from "./components/editProductForm";
+import AllSalesReturns from "@/pages/allSalesReturn";
+import EmployeePage from "@/pages/employees";
+import AllExpensesPage from "@/pages/allExpenses";
+import AllExpenseForm from "./components/allexpenseform";
+import EditAllExpense from "./components/editallexpense";
+import AllExpensesReport from "@/pages/allExpensesReport";
+import AllWithdrawalsPage from "@/pages/allWithdrawals";
+import AllWithdrawalForm from "./components/allwithdrawalform";
+import EditAllWithdrawal from "./components/editalwithdrawal";
+import AllWithdrawalsReport from "@/pages/allWithdrawalsReport";
+import AllDailyReport from "@/pages/allDailyReport";
+import AllBranchSelectionPage from "@/pages/allBranchSelect";
+import EmployeeTransactions from "@/pages/employeetransactions";
+import EmployeeTransactionForm from "@/pages/employeeTransactionForm";
+import EmployeeTransactionEditForm from "@/pages/editEmployeeTransactionForm";
+import AllDebtorsPage from "@/pages/allDebtorsPage";
+import AllDebtorTransactions from "@/pages/allDebtorTransactions";
+import DebtorTransactionForm from "@/pages/allDebtorTransactionForm";
+import EditDebtorTransactionForm from "@/pages/editAllDebtors";
+import AllVendorStatementPage from "@/pages/allVendorStatementPage";
+import AllDebtorStatementPage from "@/pages/allDebtorStatementPage";
+import EmployeeStatementPage from "@/pages/employeeStatementPage";
+// NCM related pages
+import AllNCMStatementPage from "@/pages/allNCMStatementPage";
+import AllNCMTransactions from "@/pages/allNCMTransactions";
+import NCMTransactionForm from "@/pages/ncmTransactionForm";
+import EditNCMTransactionForm from "@/pages/editNCMTransactionForm";
+import TransferForm from "./components/transferForm";
+import OrderForm from "./components/orderForm";
+import EditOrderForm from "./components/editOrderForm";
+import OrderDetail from "./components/orderDetail";
+import OrdersPage from "@/pages/ordersPage";
+import ProductIncentivesPage from "@/pages/productIncentivesPage";
+import OrderOverviewPage from "@/pages/allOrderOverview";
+import OrderReport from "@/pages/orderReport";
+import SaleExchange from "@/pages/saleExchange";
+import AttendancePage from "@/pages/attendance";
+import AttendanceReportLayout from "@/pages/attendance-report/Layout";
+import AttendanceTab from "@/pages/attendance-report/attendance";
+import LateArrivalsReport from "@/pages/attendance-report/late-arrivals";
+import EarlyDeparturesReport from "@/pages/attendance-report/early-departure";
+import MonthlyReports from "@/pages/attendance-report/monthly-reports";
+import DetailedMonthly from "@/pages/attendance-report/detailed-monthly";
+
+
+
+import LandingPage from "@/pages/mobile/landing-page";
+import InventoryPageComponent from "@/pages/mobile/inventory-page";
+import BrandPhones from "@/pages/mobile/brand-phones";
+import SinglePhone from "@/pages/mobile/single-phone";
+import EditPhoneForm from "@/pages/mobile/edit-phone-form";
+import PurchaseTransactions from "@/pages/mobile/purchase-transactions";
+import PurchaseTransactionForm from "@/pages/mobile/purchase-transaction-form";
+import EditPurchaseTransactionForm from "@/pages/mobile/edit-purchase-transaction-form";
+import PurchaseReturns from "@/pages/mobile/purchase-returns";
+import SalesTransactions from "@/pages/mobile/sales-transactions";
+import SalesTransactionForm from "@/pages/mobile/sales-transaction-form";
+import EditSalesTransactionForm from "@/pages/mobile/edit-sales-transaction-form";
+import SalesReturns from "@/pages/mobile/sales-returns";
+import SchemePageComponent from "@/pages/mobile/scheme-page";
+import BrandSchemePage from "@/pages/mobile/brand-scheme-page";
+import SchemeForm from "@/pages/mobile/scheme-form";
+import SingleScheme from "@/pages/mobile/single-scheme";
+import EditSchemeForm from "@/pages/mobile/edit-scheme-form";
+
+import PPPageComponent from "@/pages/mobile/pp-page";
+import BrandPPPage from "@/pages/mobile/brand-pp-page";
+import SinglePP from "@/pages/mobile/single-pp";
+import PriceProtectionForm from "@/pages/mobile/price-protection-form";
+import EditPriceProtectionForm from "@/pages/mobile/edit-price-protection-form";
+
+import VendorPage from "@/pages/mobile/vendor-page";
+import VendorBrand from "@/pages/mobile/vendor-brand";
+import VendorStatementPage from "@/pages/mobile/vendor-statement-page";
+import VendorTransactions from "@/pages/mobile/vendor-transactions";
+import VendorTransactionForm from "@/pages/mobile/vendor-transaction-form";
+import EditVendorTransactionForm from "@/pages/mobile/edit-vendor-transaction-form";
+
+import EMIDebtorsPage from "@/pages/mobile/emi-debtors";
+import EMIDebtorTransactions from "@/pages/mobile/emi-debtor-transactions";
+import EMIDebtorTransactionForm from "@/pages/mobile/emi-debtor-transaction-form";
+import EditEMIDebtorTransaction from "@/pages/mobile/edit-emi-debtor-transaction";
+import EMIDebtorStatementPage from "@/pages/mobile/emi-debtor-statement-page";
+import SalesReport from "@/pages/mobile/sales-report";
+import PurchaseReport from "@/pages/mobile/purchase-report";
+
+
+function App() {
+  const { isAuthenticated } = useSelector((state) => state.root);
+  useGlobalKeyPress();
+  
+  return (
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/register" element={<UserRegister />} />
+
+      {/* Protected Routes - Require Authentication */}
+      <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
+        {/* Branch Selection - Accessible after login */}
+        <Route path="/select-branch" element={<InitialBranchSelection />} />
+        
+        {/* Branch Protected Routes - Require branch selection */}
+        <Route element={<BranchProtectedRoute />}>
+          {/* Original Landing Page */}
+          <Route path="/" element={<AllLandingPage />} />
+          {/* Branch-specific Landing Page */}
+          <Route path="/branch/:branchId" element={<AllLandingPage />} />
+
+          {/* Main Routes - All use branch from localStorage */}
+          <Route path="/purchases/branch/:branchId" element={<AllPurchaseTransactions />} />
+          <Route path="/purchases/form/branch/:branchId" element={<AllPurchaseTransactionForm />} />
+          <Route path="purchases/branch/:branchId/editform/:purchaseId" element={<EditAllPurchaseTransactionForm />} />
+
+          <Route path="manufacture/branch/:branchId" element={<AllManufactureTransactions />} />
+          <Route path="manufacture/form/branch/:branchId" element={<AllManufactureTransactionForm />} />
+          <Route path="manufacture/branch/:branchId/editform/:manufactureId" element={<EditAllManufactureForm />} />
+
+          <Route path="purchase-returns/branch/:branchId" element={<AllPurchaseReturns/>}/>
+
+          <Route path="inventory/branch/:branchId" element={<AllInventoryPageComponent />} />
+          <Route path="inventory/branch/:branchId/brand/:id" element={<AllBrandProducts />} />
+          <Route path="inventory/branch/:branchId/editproduct/:productId" element={<EditProductForm/>} />
+
+          <Route path="sales/branch/:branchId" element={<AllSalesTransactions />} />
+          <Route path="sales/form/branch/:branchId" element={<AllSalesTransactionForm />} />
+          <Route path="sales/exchange/form/branch/:branchId" element={<SaleExchange />} />
+          <Route path="sales/branch/:branchId/editform/:salesId" element={<EditAllSalesTransactionForm />} />
+
+          <Route path="sales-returns/branch/:branchId" element={<AllSalesReturns/>}/>
+          <Route path="sales-report/branch/:branchId" element={<AllSalesReport/>}/>
+          <Route path="purchase-report/branch/:branchId" element={<AllPurchaseReport/>}/>
+          {/* Expenses */}
+          <Route path="expenses/branch/:branchId" element={<AllExpensesPage />} />
+          <Route path="expenses/form/branch/:branchId" element={<AllExpenseForm />} />
+          <Route path="expenses/branch/:branchId/edit/:expenseId" element={<EditAllExpense />} />
+          <Route path="expenses-report/branch/:branchId" element={<AllExpensesReport />} />
+          {/* Withdrawals */}
+          <Route path="withdrawals/branch/:branchId" element={<AllWithdrawalsPage />} />
+          <Route path="withdrawals/form/branch/:branchId" element={<AllWithdrawalForm />} />
+          <Route path="withdrawals/branch/:branchId/edit/:withdrawalId" element={<EditAllWithdrawal />} />
+          <Route path="withdrawals-report/branch/:branchId" element={<AllWithdrawalsReport />} />
+          <Route path="income-expense-report/branch/:branchId" element={<AllDailyReport />} />
+
+          <Route path="employee/branch/:branchId" element={<EmployeePage/>}/>
+
+          <Route path="attendance/branch/:branchId" element={<AttendancePage />} />
+          <Route path="attendance-report/branch/:branchId" element={<AttendanceReportLayout />}>
+            <Route index element={<AttendanceTab />} />
+            <Route path="late-arrivals" element={<LateArrivalsReport />} />
+            <Route path="early-departure" element={<EarlyDeparturesReport />} />
+            <Route path="monthly-reports" element={<MonthlyReports />} />
+            <Route path="detailed-monthly" element={<DetailedMonthly />} />
+          </Route>
+
+          <Route path="employee/product-incentives/branch/:branchId" element={<ProductIncentivesPage />} />
+
+          <Route path="vendors/branch/:branchId" element={<AllVendorPage />} />
+          <Route path="vendors/statement/:vendorId" element={<AllVendorStatementPage />} />
+          <Route path="customers" element={<AllCustomersPage />} />
+          <Route path="customers/branch/:branchId" element={<AllCustomersPage />} />
+          <Route path="customer-lottery" element={<CustomerLotteryPage />} />
+          <Route path="customer-lottery/branch/:branchId" element={<CustomerLotteryPage />} />
+          <Route path="employee/branch/:branchId/statement/:employeeId" element={<EmployeeStatementPage />} />
+
+          <Route path="vendor-transactions/branch/:branchId" element={<AllVendorTransactions />}/>
+          <Route path="vendor-transactions/branch/:branchId/form" element={<AllVendorTransactionForm />} />
+          <Route path="vendor-transactions/branch/:branchId/editform/:vendorTransactionId" element={<EditAllVendorTransactionForm />} />
+
+          <Route path="employee-transactions/branch/:branchId" element={<EmployeeTransactions />}/>
+          <Route path="employee-transactions/branch/:branchId/form" element={<EmployeeTransactionForm />}/>
+          <Route path="employee-transactions/branch/:branchId/editform/:id" element={<EmployeeTransactionEditForm />}/> 
+
+          <Route path="debtors/branch/:branchId" element={<AllDebtorsPage />} />
+          <Route path="debtor-transactions/branch/:branchId" element={<AllDebtorTransactions />} />
+          <Route path="debtor-transactions/branch/:branchId/form" element={<DebtorTransactionForm />} />
+          <Route path="debtor-transactions/branch/:branchId/editform/:debtorTransactionId" element={<EditDebtorTransactionForm />} />
+          <Route path="debtors/branch/:branchId/statement/:debtorId/" element={<AllDebtorStatementPage />} />
+
+          {/* NCM pages */}
+          <Route path="ncm-transactions/branch/:branchId" element={<AllNCMTransactions />} />
+          <Route path="ncm-transactions/branch/:branchId/form" element={<NCMTransactionForm />} />
+          <Route path="ncm-transactions/branch/:branchId/editform/:ncmTransactionId" element={<EditNCMTransactionForm />} />
+          <Route path="ncm/statement/branch/:branchId" element={<AllNCMStatementPage />} />
+
+          <Route path="invoice/:transactionId" element={<InvoicePage />} />
+          <Route path="transfer/form/branch/:branchId" element={<TransferForm />} />
+          
+          {/* Orders */}
+          <Route path="orders/branch/:branchId" element={<OrdersPage />} />
+          <Route path="orders/form/branch/:branchId" element={<OrderForm />} />
+          <Route path="orders/branch/:branchId/editform/:orderId" element={<EditOrderForm />} />
+          <Route path="orders/branch/:branchId/detail/:orderId" element={<OrderDetail />} />
+          <Route path="order-overview/branch/:branchId" element={<OrderOverviewPage />} />
+          <Route path="order-report/branch/:branchId" element={<OrderReport />} />
+
+
+
+{/* seperated */}
+        <Route path="/mobile" >
+          <Route path="" element={<LandingPage />} />
+          <Route path="inventory/branch/:branchId" element={<InventoryPageComponent />} />
+          <Route path="inventory/branch/:branchId/brand/:id" element={<BrandPhones />} />
+          <Route path="phone/:id" element={<SinglePhone />} />
+          <Route path="inventory/edit-phone/:phoneId" element={<EditPhoneForm />} />
+
+          {/* Purchases Section */}
+          <Route path="purchases/branch/:branchId" element={<PurchaseTransactions />} />
+          <Route path="purchases/form/branch/:branchId" element={<PurchaseTransactionForm />} />
+          <Route path="purchases/branch/:branchId/editform/:purchaseId" element={<EditPurchaseTransactionForm />} />
+
+          <Route path="purchase-returns/branch/:branchId" element={<PurchaseReturns />} />
+
+          {/* Sales Section */}
+          <Route path="sales/branch/:branchId" element={<SalesTransactions />} />
+          <Route path="sales/form/branch/:branchId" element={<SalesTransactionForm />} />
+          <Route path="sales/branch/:branchId/editform/:salesId" element={<EditSalesTransactionForm />} />
+
+          <Route path="sales-returns/branch/:branchId" element={<SalesReturns />} />
+
+          <Route path="invoice/:transactionId" element={<InvoicePage />} />
+
+          {/* Schemes Section */}
+          <Route path="schemes/branch/:branchId" element={<SchemePageComponent />} />
+          <Route path="schemes/branch/:branchId/brand/:id" element={<BrandSchemePage />} />
+          <Route path="schemes/branch/:branchId/new" element={<SchemeForm />} />
+          <Route path="schemes/:id" element={<SingleScheme />} />
+          <Route path="schemes/branch/:branchId/editform/:schemeId" element={<EditSchemeForm />} />
+
+          {/* Price Protection Section */}
+          <Route path="price-protection/branch/:branchId" element={<PPPageComponent />} />
+          <Route path="price-protection/branch/:branchId/brand/:id" element={<BrandPPPage />} />
+          <Route path="price-protection/:id" element={<SinglePP />} />
+          <Route path="price-protection/branch/:branchId/new" element={<PriceProtectionForm />} />
+          <Route path="price-protection/editform/:priceProtectionId" element={<EditPriceProtectionForm />} />
+
+          {/* Vendors Section */}
+          <Route path="vendors/branch/:branchId" element={<VendorPage />} />
+          <Route path="vendors/branch/:branchId/brand/:id" element={<VendorBrand />} />
+          <Route path="vendors/statement/:vendorId" element={<VendorStatementPage />} />
+
+          <Route path="vendor-transactions/branch/:branchId" element={<VendorTransactions />} />
+          <Route path="vendor-transactions/branch/:branchId/form" element={<VendorTransactionForm />} />
+          <Route path="vendor-transactions/branch/:branchId/editform/:vendorTransactionId" element={<EditVendorTransactionForm />} />
+
+          <Route path="emi/branch/:branchId" element={<EMIDebtorsPage />} />
+
+          <Route path="emi-transactions/branch/:branchId" element={<EMIDebtorTransactions/>}/>
+          <Route path="emi-transactions/branch/:branchId/form" element={<EMIDebtorTransactionForm />} />
+          <Route path="emi-transactions/branch/:branchId/editform/:transactionId" element={<EditEMIDebtorTransaction />} />
+
+          <Route path="emi/statement/:debtorId" element={<EMIDebtorStatementPage />} />
+          <Route path="sales-report/branch/:branchId" element={<SalesReport/>}/>
+          <Route path="purchase-report/branch/:branchId" element={<PurchaseReport/>}/>
+
+
+        </Route>
+        </Route>
+      </Route>
+    </Routes>
+  );
+}
+
+export default App;
