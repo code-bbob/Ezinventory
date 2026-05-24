@@ -136,7 +136,7 @@ export default function Sidebar() {
       mainPath: 'inventory',
       items: [
         { title: 'Inventory', icon: Container, path: 'inventory' },
-        { title: 'Manufacture', icon: Zap, path: 'manufacture', visibleToRoles: ['admin', 'manager'] }
+        // { title: 'Manufacture', icon: Zap, path: 'manufacture', visibleToRoles: ['admin', 'manager'] }
       ]
     },
     {
@@ -179,18 +179,18 @@ export default function Sidebar() {
       items: [
         { title: 'Employees', icon: TrendingUp, path: 'employee' },
         { title: 'Employee Transaction', icon: TrendingUp, path: 'employee-transactions' },
-        { title: 'Product Incentives', icon: Container, path: 'employee/product-incentives' }
+        // { title: 'Product Incentives', icon: Container, path: 'employee/product-incentives' }
       ]
     },
-    {
-      label: 'Attendance',
-      icon: Shield,
-      mainPath: 'attendance',
-      items: [
-        { title: 'Attendance', icon: Shield, path: 'attendance' },
-        { title: 'Attendance Report', icon: Shield, path: 'attendance-report', externalReport: true }
-      ]
-    },
+    // {
+    //   label: 'Attendance',
+    //   icon: Shield,
+    //   mainPath: 'attendance',
+    //   items: [
+    //     { title: 'Attendance', icon: Shield, path: 'attendance' },
+    //     { title: 'Attendance Report', icon: Shield, path: 'attendance-report', externalReport: true }
+    //   ]
+    // },
     {
       label: 'Vendors',
       icon: BookUser,
@@ -218,15 +218,15 @@ export default function Sidebar() {
         { title: 'Customer Lottery', icon: Trophy, path: 'customer-lottery' }
       ]
     },
-    {
-      label: 'NCM',
-      icon: BookCopy,
-      mainPath: 'ncm/statement',
-      items: [
-        { title: 'NCM Statement', icon: BookCopy, path: 'ncm/statement' },
-        { title: 'NCM Transactions', icon: BookCopy, path: 'ncm-transactions' }
-      ]
-    },
+    // {
+    //   label: 'NCM',
+    //   icon: BookCopy,
+    //   mainPath: 'ncm/statement',
+    //   items: [
+    //     { title: 'NCM Statement', icon: BookCopy, path: 'ncm/statement' },
+    //     { title: 'NCM Transactions', icon: BookCopy, path: 'ncm-transactions' }
+    //   ]
+    // },
     {
       label: 'Transfer',
       icon: RefreshCw,
@@ -236,17 +236,17 @@ export default function Sidebar() {
       ]
     }
     ,
-    {
-      label: 'Orders',
-      icon: ShoppingCart,
-      mainPath: 'orders/form',
-      items: [
-        { title: 'Add Order', icon: ShoppingCart, path: 'orders/form' },
-        { title: 'Orders', icon: ShoppingCart, path: 'orders' },
-        { title: 'Order Report', icon: BookCopy, path: 'order-report', externalReport: true },
-        { title: 'Order Overview', icon: ShoppingCart, path: 'order-overview', externalReport: true}
-      ]
-    },
+    // {
+    //   label: 'Orders',
+    //   icon: ShoppingCart,
+    //   mainPath: 'orders/form',
+    //   items: [
+    //     { title: 'Add Order', icon: ShoppingCart, path: 'orders/form' },
+    //     { title: 'Orders', icon: ShoppingCart, path: 'orders' },
+    //     { title: 'Order Report', icon: BookCopy, path: 'order-report', externalReport: true },
+    //     { title: 'Order Overview', icon: ShoppingCart, path: 'order-overview', externalReport: true}
+    //   ]
+    // },
     // { label: 'Reports', icon: BookCopy, mainPath: 'income-expense-report', items: [
     //   { title: 'I/E Report', icon: BookCopy, path: 'income-expense-report', externalReport: true},
     //   { title: 'Purchase Report', icon: BookCopy, path: 'purchase-report', externalReport: true },
@@ -256,12 +256,12 @@ export default function Sidebar() {
     //   { title: 'Withdrawals Report', icon: BookCopy, path: 'withdrawals-report', externalReport: true }
     // ] }
 { label: 'Reports', icon: BookCopy, mainPath: 'sales-report', items: [
-      // { title: 'I/E Report', icon: BookCopy, path: 'income-expense-report', externalReport: true},
+      { title: 'I/E Report', icon: BookCopy, path: 'income-expense-report', externalReport: true},
       { title: 'Purchase Report', icon: BookCopy, path: 'purchase-report', externalReport: true },
       { title: 'Sales Report', icon: BookCopy, path: 'sales-report', externalReport: true },
       { title: 'Expenses Report', icon: BookCopy, path: 'expenses-report', externalReport: true },
       { title: 'Order Report', icon: BookCopy, path: 'order-report', externalReport: true },
-      // { title: 'Withdrawals Report', icon: BookCopy, path: 'withdrawals-report', externalReport: true }
+      { title: 'Withdrawals Report', icon: BookCopy, path: 'withdrawals-report', externalReport: true }
     ] }
 
   ]
