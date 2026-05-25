@@ -135,7 +135,7 @@ export default function AllSalesTransactions() {
   const handleInvoice = (e,id) => {
     e.preventDefault();
     e.stopPropagation();
-    navigate(`/invoice/${id}`)
+    navigate(`/invoice/${id}?type=all`) // Pass type=all to indicate it's from all sales page
   }
 
   // Bulk delete functions
@@ -378,8 +378,8 @@ export default function AllSalesTransactions() {
                     </div>
                   ))}
                   <div className="mt-4 flex justify-between text-white font-bold">
-                    {/* <Button onClick={(e)=> handleInvoice(e,transaction.id)} className="bg-purple-600 hover:bg-purple-700 text-white">View Invoice</Button> */}
                     <div>Posted by {transaction?.employee_name}</div>
+                    <Button onClick={(e)=> handleInvoice(e,transaction.id)} className="bg-purple-600 hover:bg-purple-700 text-white">View Invoice</Button>
                     <div>Amount Received: RS. {transaction?.amount_paid?.toLocaleString()}</div>
                   </div>
                 </CardContent>

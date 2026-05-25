@@ -1210,7 +1210,7 @@ class SalesTransactionSerializer(serializers.ModelSerializer):
 
     def get_enterprise_contact(self, obj):
         try:
-            return getattr(obj.enterprise, 'contact', None)
+            return getattr(obj.enterprise, 'contact_phone', None)
         except Exception:
             return None
 

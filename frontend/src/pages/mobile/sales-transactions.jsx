@@ -116,7 +116,7 @@ export default function SalesTransactions() {
   const handleInvoice = (e, id) => {
     e.preventDefault();
     e.stopPropagation();
-    navigate(`/mobile/invoice/${id}`)
+    navigate(`/mobile/invoice/${id}?type=mobile`)
   }
 
   useEffect(() => {

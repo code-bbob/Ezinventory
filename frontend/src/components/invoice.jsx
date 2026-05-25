@@ -106,11 +106,18 @@ const Invoice = ({ transactionId }) => {
   const [error, setError] = useState(null)
   const api = useAxios()
 
+  const type = new URLSearchParams(window.location.search).get("type") // Get type from query params
+
   useEffect(() => {
     const fetchInvoiceData = async () => {
       try {
-        const response = await api.get(`alltransaction/salestransaction/${transactionId}/`)
-        setInvoiceData(response.data)
+        if (type === "all") {
+          const response = await api.get(`alltransaction/salestransaction/${transactionId}/`)
+          setInvoiceData(response.data)
+        } else {
+          const response = await api.get(`transaction/salestransaction/${transactionId}/`)
+          setInvoiceData(response.data)
+        }
         setLoading(false)
       } catch (err) {
         setError("Failed to fetch invoice data")
@@ -133,9 +140,9 @@ const Invoice = ({ transactionId }) => {
     <InvoiceContainer>
       <InvoiceHeader>
         <CompanyInfo>
-          <h1>{invoiceData.company_name}</h1>
-          <p>Basundhara -03, Kathmandu</p>
-          <p>Phone: (+977) 9851227175, 9841682921</p>
+          <h1>{invoiceData.enterprise_name}</h1>
+          <p>{invoiceData.enterprise_address}</p>
+          <p>Phone: (+977) {invoiceData.enterprise_contact}</p>
           {/* <p>Email: info@digitechenterprises.com</p> */}
         </CompanyInfo>
         <InvoiceInfo>
@@ -166,13 +173,13 @@ const Invoice = ({ transactionId }) => {
             
             <TableRow key={item.id}>
               <TableCell>{index+1}</TableCell>
-              <TableCell>{item.product_name}</TableCell>
-              <TableCell className="text-right">{item.quantity}</TableCell>
+              <TableCell>{item.phone_name ? item.phone_name + " (" + item.imei_number + ")"  : item.product_name}</TableCell>
+              <TableCell className="text-right">{item.quantity || 1}</TableCell>
               <TableCell className="text-right">
                 {item.unit_price}
               </TableCell>
               <TableCell className="text-right">
-                {item.total_price}
+                {item.total_price? item.total_price : item.unit_price}
               </TableCell>
             </TableRow>
           ))}
