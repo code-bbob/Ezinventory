@@ -177,7 +177,7 @@ class MergeBrandView(APIView):
         
 
         #now merge the products as well
-        for brand in Brand.objects.filter(branch=branch):
+        for brand in Brand.objects.filter(branch=selfbranch):
             for product in Product.objects.filter(branch=branch,brand=brand):
                 if Product.objects.filter(branch_id=selfbranch, brand__name__iexact=brand.name, name__iexact=product.name).exists():
                     continue
