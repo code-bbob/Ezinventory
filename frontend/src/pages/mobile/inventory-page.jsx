@@ -253,6 +253,7 @@ export default function InventoryPageComponent() {
 
       {/* Reusable Branch Dialog */}
       <BranchDialog
+        loading ={loading}
         branch={selectedBranch}
         isOpen={isBranchDialogOpen}
         onClose={() => setIsBranchDialogOpen(false)}
@@ -325,7 +326,7 @@ function BrandCard({ brand, onClick, onDelete }) {
   )
 }
 
-function BranchDialog({ branch, isOpen, onClose, onMerge }) {
+function BranchDialog({ branch, isOpen, onClose, onMerge, loading }) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-slate-800 text-white">
@@ -341,6 +342,7 @@ function BranchDialog({ branch, isOpen, onClose, onMerge }) {
           <Button
             onClick={() => onMerge(branch.id)}
             className="w-full bg-red-600 hover:scale-105 hover:bg-red-700 text-white"
+            disabled={loading}
           >
             Yes
           </Button>

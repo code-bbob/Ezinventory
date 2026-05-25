@@ -48,12 +48,16 @@ export function AllInventoryPageComponent() {
 
   const handleMerge = async (id) => {
     try {
+      setLoading(true)
       await api.post(`allinventory/brand/branch/${branchId}/merge/${id}/`)
       setIsBranchDialogOpen(false)
       window.location.reload()
       // navigate('/')
     } catch (error) {
       console.error("Error merging branch:", error)
+    }
+    finally {
+      setLoading(false)
     }
   }
 
@@ -253,6 +257,7 @@ export function AllInventoryPageComponent() {
 
       {/* Reusable Branch Dialog */}
       <BranchDialog
+        loading={loading}
         branch={selectedBranch}
         isOpen={isBranchDialogOpen}
         onClose={() => setIsBranchDialogOpen(false)}
@@ -325,7 +330,7 @@ function BrandCard({ brand, onClick, onDelete }) {
   )
 }
 
-function BranchDialog({ branch, isOpen, onClose, onMerge }) {
+function BranchDialog({ branch, isOpen, onClose, onMerge, loading }) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-slate-800 text-white">
@@ -339,6 +344,7 @@ function BranchDialog({ branch, isOpen, onClose, onMerge }) {
         </DialogHeader>
         <DialogFooter>
           <Button
+            disabled={loading}
             onClick={() => onMerge(branch.id)}
             className="w-full bg-red-600 hover:scale-105 hover:bg-red-700 text-white"
           >

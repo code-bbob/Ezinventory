@@ -153,6 +153,31 @@ class MergeBrandView(APIView):
             if brand.name in Brand.objects.filter(branch_id=selfbranch).values_list('name',flat=True):
                 continue
             Brand.objects.create(name=brand.name,enterprise=brand.enterprise,branch_id=selfbranch)
+        
+
+
+class MergeBrandView(APIView):
+    def post(self,request,selfbranch,mergebranch,format=None):
+        
+        branch = Branch.objects.get(id=mergebranch)
+        print(branch.name)
+        # return Response("Merged")
+
+        for brand in Brand.objects.filter(branch=branch):
+            if brand.name in Brand.objects.filter(branch_id=selfbranch).values_list('name',flat=True):
+                continue
+            Brand.objects.create(name=brand.name,enterprise=brand.enterprise,branch_id=selfbranch)
+        
+
+        #now merge the products as well
+        for brand in Brand.objects.filter(branch=selfbranch):
+            print("BRAND ",brand.name)
+            for phone in Phone.objects.filter(branch=branch,brand__name=brand.name):
+                print("PHONE ",phone.name)
+                if Phone.objects.filter(branch_id=selfbranch, brand__name__iexact=brand.name, name__iexact=phone.name).exists():
+                    continue
+                p = Phone.objects.create(name=phone.name,enterprise=phone.enterprise,branch_id=selfbranch,cost_price=phone.cost_price,selling_price=phone.selling_price,brand_id=brand.id)
+                print("CREATED",p)
         return Response("Merged")
 
 class MergeProductBrandView(APIView):
