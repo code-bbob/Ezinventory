@@ -48,6 +48,7 @@ export default function InventoryPageComponent() {
 
   const handleMerge = async (id) => {
     try {
+      setLoading(true)
       await api.post(`inventory/brand/branch/${branchId}/merge/${id}/`)
       setIsBranchDialogOpen(false)
       window.location.reload()
@@ -55,6 +56,9 @@ export default function InventoryPageComponent() {
     } catch (error) {
       console.error("Error merging branch:", error)
     }
+      finally {
+        setLoading(false)
+      }
   }
 
   useEffect(() => {
