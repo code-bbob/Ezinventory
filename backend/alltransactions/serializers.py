@@ -355,6 +355,9 @@ class SalesTransactionSerializer(serializers.ModelSerializer):
     exchange_previous_balance = serializers.FloatField(write_only=True, required=False, default=0)
     exchange_exceeded_amount = serializers.FloatField(write_only=True, required=False, default=0)
     exchange_desc = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    enterprise_name = serializers.SerializerMethodField(read_only=True)
+    enterprise_address = serializers.SerializerMethodField(read_only=True)
+    enterprise_contact = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = SalesTransaction
@@ -650,6 +653,15 @@ class SalesTransactionSerializer(serializers.ModelSerializer):
 
     def get_employee_name(self, obj):
         return obj.employee.user.name if obj.employee else None
+    
+    def get_enterprise_name(self, obj):
+        return obj.enterprise.name if obj.enterprise else None
+    
+    def get_enterprise_address(self, obj):
+        return obj.enterprise.address if obj.enterprise else None
+    
+    def get_enterprise_contact(self, obj):
+        return obj.enterprise.contact_phone if obj.enterprise else None
 
 
 class VendorTransactionSerializer(serializers.ModelSerializer):
