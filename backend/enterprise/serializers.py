@@ -36,7 +36,7 @@ class EnterpriseHierarchySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Enterprise
-        fields = ['id', 'name', 'address', 'contact_email', 'contact_phone', 'licensed', 'licensed_until', 'max_alowed_employees', 'date_format_preference', 'branches', 'departments']
+        fields = ['id', 'name', 'address', 'contact_email', 'contact_phone', 'licensed', 'licensed_until', 'has_phone_feature', 'max_alowed_employees', 'date_format_preference', 'branches', 'departments']
 
 
 class EnterpriseSummarySerializer(serializers.ModelSerializer):

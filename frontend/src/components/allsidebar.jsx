@@ -41,6 +41,7 @@ export default function Sidebar() {
   const [isChangingBranch, setIsChangingBranch] = useState(false)
   const [role, setRole] = useState('')
   const [userName, setUserName] = useState('')
+  const [hasPhoneFeature, setHasPhoneFeature] = useState(false)
   const api = useAxios()
   
   // Use branch management hook
@@ -83,6 +84,7 @@ export default function Sidebar() {
   useEffect(() => {
     fetchRole()
     fetchUserInfo()
+    fetchEnterpriseFeatures()
   }, [])
 
   const fetchRole = async () => {
@@ -99,6 +101,16 @@ export default function Sidebar() {
     try {
       const r = await api.get('userauth/info/')
       setUserName(r.data.userinfo.name || r.data.user_name || '')
+    } catch (e) {
+      // silently fail
+    }
+  }
+
+  const fetchEnterpriseFeatures = async () => {
+    try {
+      const r = await api.get('enterprise/api/hierarchy/')
+      const enterprise = r.data?.enterprises?.[0]
+      setHasPhoneFeature(Boolean(enterprise?.has_phone_feature))
     } catch (e) {
       // silently fail
     }
@@ -415,25 +427,29 @@ export default function Sidebar() {
                 </div>
               )}
 
+                {hasPhoneFeature && (
               <div className="flex justify-center mb-4">
-  <div className="flex items-center text-[12px] font-semibold uppercase tracking-wide rounded-full overflow-hidden border border-slate-600/60 bg-slate-800/80 backdrop-blur-md shadow-inner shadow-slate-900/50">
-    <button
-      className="px-4 py-2 flex items-center gap-2 text-white bg-slate-700/80"
-      aria-current="page"
-    >
-      <Container className="h-4 w-4 text-indigo-300" />
-      <span>All</span>
-    </button>
-    <span className="w-px h-6 bg-slate-600/60" />
-    <button
-      className="px-4 py-2 flex items-center gap-2 text-slate-300 hover:bg-slate-700/80 hover:text-white transition"
-      onClick={() => { navigate('/mobile'); setIsOpen(false) }}
-    >
-      <Smartphone className="h-4 w-4 text-fuchsia-300" />
-      <span>Phone</span>
-    </button>
-  </div>
-</div>
+                <div className="flex items-center text-[12px] font-semibold uppercase tracking-wide rounded-full overflow-hidden border border-slate-600/60 bg-slate-800/80 backdrop-blur-md shadow-inner shadow-slate-900/50">
+                  <button
+                    className={`px-4 py-2 flex items-center gap-2 text-white bg-slate-700/80 ${hasPhoneFeature ? '' : 'rounded-full'}`}
+                    aria-current="page"
+                  >
+                    <Container className="h-4 w-4 text-indigo-300" />
+                    <span>All</span>
+                  </button>
+                    
+                      <span className="w-px h-6 bg-slate-600/60" />
+                      <button
+                        className="px-4 py-2 flex items-center gap-2 text-slate-300 hover:bg-slate-700/80 hover:text-white transition"
+                        onClick={() => { navigate('/mobile'); setIsOpen(false) }}
+                      >
+                        <Smartphone className="h-4 w-4 text-fuchsia-300" />
+                        <span>Phone</span>
+                      </button>
+
+                </div>
+              </div>
+                  )}
               
               <nav className="space-y-3 mt-2">
                 {groupedMenu.map(group => {

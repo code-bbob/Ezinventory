@@ -27,6 +27,7 @@ class Enterprise(models.Model):
         default='ad',
         help_text='Preferred date format for attendance and reports'
     )
+    has_phone_feature = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['name']

@@ -162,7 +162,6 @@ class Sales(models.Model):
         super().save()
 
 class VendorTransactions(models.Model):
-
     date = models.DateField()
     vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE,related_name='allvendors')
     amount = models.FloatField(null=True,blank=True)
