@@ -103,7 +103,7 @@ function AllPurchaseTransactionForm() {
           userBranchResponse,
         ] = await Promise.all([
           api.get("allinventory/product/branch/" + branchId + "/"),
-          api.get("alltransaction/vendor/branch"),
+          api.get("alltransaction/vendor/"),
           api.get("allinventory/brand/branch/" + branchId + "/"),
           api.get("enterprise/branch/" + branchId + "/"),
           api.get("enterprise/getbranch/"),
