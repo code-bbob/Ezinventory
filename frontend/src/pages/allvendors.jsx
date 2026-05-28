@@ -52,7 +52,7 @@ export default function AllVendorPage() {
     const fetchData = async () => {
       try {
         const phoneRes = await api.get(
-          `alltransaction/vendor/branch/${branchId}/`
+          `alltransaction/vendor/`
         );
         setPhones(phoneRes.data);
         setFilteredPhones(phoneRes.data);

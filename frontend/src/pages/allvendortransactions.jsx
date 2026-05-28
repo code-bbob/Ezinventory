@@ -53,7 +53,7 @@ export default function AllVendorTransactions() {
 
   const fetchInitData = async () => {
     try {
-      const response = await api.get(`alltransaction/vendortransaction/branch/${branchId}/`)
+      const response = await api.get(`alltransaction/vendortransaction/`)
       setTransactions(response.data.results)
       // console.log(response.data.results)
       setMetadata({

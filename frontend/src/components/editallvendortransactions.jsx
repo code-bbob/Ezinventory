@@ -64,7 +64,7 @@ export default function EditAllVendorTransactionForm() {
     const fetchData = async () => {
       try {
         const [vendorsResponse, brandsResponse, vendorTransactionResponse] = await Promise.all([
-          api.get("alltransaction/vendor/branch/" + branchId + "/"),
+          api.get("alltransaction/vendor/"),
           api.get("allinventory/brand/branch/" + branchId + "/"),
           api.get(`alltransaction/vendortransaction/${vendorTransactionId}/`)
         ]);

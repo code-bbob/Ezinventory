@@ -176,7 +176,7 @@ class MergeBrandView(APIView):
                 print("PHONE ",phone.name)
                 if Phone.objects.filter(branch_id=selfbranch, brand__name__iexact=brand.name, name__iexact=phone.name).exists():
                     continue
-                p = Phone.objects.create(name=phone.name,enterprise=phone.enterprise,branch_id=selfbranch,cost_price=phone.cost_price,selling_price=phone.selling_price,brand_id=brand.id)
+                p = Phone.objects.create(name=phone.name,enterprise=phone.enterprise,branch_id=selfbranch,cost_price=phone.cost_price,selling_price=phone.selling_price,brand_id=brand.id, vendor=phone.vendor)
                 print("CREATED",p)
         return Response("Merged")
 
@@ -190,7 +190,7 @@ class MergeProductBrandView(APIView):
             if Phone.objects.filter(branch_id=selfbranch, brand=brand, name__iexact=phone.name).exists():
                 print("HERE")
                 continue
-            p = Phone.objects.create(name=phone.name,enterprise=phone.enterprise,branch_id=selfbranch,cost_price=phone.cost_price,selling_price=phone.selling_price,brand_id=brand.id)
+            p = Phone.objects.create(name=phone.name,enterprise=phone.enterprise,branch_id=selfbranch,cost_price=phone.cost_price,selling_price=phone.selling_price,brand_id=brand.id, vendor=phone.vendor)
             print("CREATED",p)
             
         return Response("Merged")
