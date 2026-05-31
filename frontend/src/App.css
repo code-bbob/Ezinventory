@@ -3,33 +3,32 @@
 /* Print styles */
 @media print {
   @page {
-    size: A4;
-    margin: 0.5cm;
+    size: 80mm auto;  /* receipt width, continuous height */
+    margin: 0;
   }
 
   body {
+    width: 80mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
     background-color: white !important;
     color: black !important;
   }
 
+  /* Hide buttons, nav, back links during print */
+  .no-print,
   .print-hidden {
     display: none !important;
   }
 
+  /* Let receipt tables use their own styles */
   table {
     width: 100%;
     border-collapse: collapse;
   }
-
-  th,
-  td {
-    border: 1px solid #ddd;
-    padding: 8px;
+  th, td {
+    padding: 2px;
     text-align: left;
-  }
-
-  th {
-    background-color: #f2f2f2;
   }
 }
 
@@ -39,4 +38,3 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-

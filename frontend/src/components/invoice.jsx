@@ -1,207 +1,207 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { format } from "date-fns"
-import styled from "styled-components"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import styled, { createGlobalStyle } from "styled-components"
 import { Button } from "@/components/ui/button"
 import { Printer } from "lucide-react"
 import useAxios from "@/utils/useAxios"
 
-// Styled components
-const InvoiceContainer = styled.div`
-  max-width: 3xl;
-  margin: 0 auto;
-  padding: 2rem;
-  background-color: white;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-
+const PrintStyle = createGlobalStyle`
   @media print {
-    box-shadow: none;
-    padding: 0;
+    @page {
+      size: 80mm auto;
+      margin: 0;
+    }
+    html, body {
+      width: 80mm !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      background: white !important;
+    }
+    .no-print {
+      display: none !important;
+    }
   }
 `
 
-const InvoiceHeader = styled.div`
+const ReceiptWrap = styled.div`
+  width: 80mm;
+  margin: 2rem auto;
+  padding: 6mm 5mm;
+  background: white;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  color: #000;
+  box-sizing: border-box;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+
+  @media print {
+    margin: 0 !important;
+    padding: 4mm !important;
+    box-shadow: none !important;
+    /* height is set dynamically by handlePrint via inline style */
+  }
+`
+
+const Row = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 2rem;
 `
+const CompanyName = styled.div`font-size: 15px; font-weight: bold;`
+const Small = styled.div`font-size: 10px; color: #333; line-height: 1.5;`
+const InvoiceLabel = styled.div`font-size: 13px; font-weight: bold; text-transform: uppercase; text-align: right;`
+const Dash = styled.hr`border: none; border-top: 1px dashed #000; margin: 5px 0;`
+const Section = styled.div`margin: 4px 0; font-size: 10px; line-height: 1.6;`
+const SectionTitle = styled.div`font-weight: bold; font-size: 11px;`
+const RTable = styled.table`width: 100%; border-collapse: collapse; font-size: 10px;`
+const Th = styled.th`text-align: ${p => p.$r ? "right" : "left"}; padding: 2px; font-weight: bold; border-bottom: 1px solid #000; white-space: nowrap;`
+const Td = styled.td`text-align: ${p => p.$r ? "right" : "left"}; padding: 2px; vertical-align: top; word-break: break-word;`
+const TotalRow = styled.div`display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; margin: 6px 0;`
+const Center = styled.div`text-align: center; font-size: 10px; color: #555; margin: 5px 0 2px;`
 
-const CompanyInfo = styled.div`
-  h1 {
-    font-size: 1.875rem;
-    font-weight: bold;
-    color: #1f2937;
-  }
-
-  p {
-    font-size: 0.875rem;
-    color: #4b5563;
-  }
-`
-
-const InvoiceInfo = styled.div`
-  text-align: right;
-
-  h2 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #1f2937;
-  }
-
-  p {
-    font-size: 0.875rem;
-    color: #4b5563;
-  }
-`
-
-const BillTo = styled.div`
-  margin-bottom: 2rem;
-
-  h3 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-  }
-
-  p {
-    color: #1f2937;
-  }
-`
-
-const TotalAmount = styled.div`
-  margin-top: 2rem;
-  text-align: right;
-
-  p {
-    font-size: 1.125rem;
-    font-weight: 600;
-  }
-`
-
-const ThankYou = styled.div`
-  margin-top: 3rem;
-  text-align: center;
-  font-size: 0.875rem;
-  color: #4b5563;
-`
-
-const PrintButton = styled(Button)`
-  margin-top: 2rem;
-  width: 100%;
-
-  @media print {
-    display: none;
-     @page {
-    margin: 2cm;
-  }
-  }
-
-`
-
-// Main component
 const Invoice = ({ transactionId }) => {
   const [invoiceData, setInvoiceData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const api = useAxios()
-
-  const type = new URLSearchParams(window.location.search).get("type") // Get type from query params
+  const [loading, setLoading]         = useState(true)
+  const [error, setError]             = useState(null)
+  const receiptRef = useRef(null)
+  const api  = useAxios()
+  const type = new URLSearchParams(window.location.search).get("type")
 
   useEffect(() => {
-    const fetchInvoiceData = async () => {
+    ;(async () => {
       try {
-        if (type === "all") {
-          const response = await api.get(`alltransaction/salestransaction/${transactionId}/`)
-          setInvoiceData(response.data)
-        } else {
-          const response = await api.get(`transaction/salestransaction/${transactionId}/`)
-          setInvoiceData(response.data)
-        }
-        setLoading(false)
-      } catch (err) {
+        const url = type === "all"
+          ? `alltransaction/salestransaction/${transactionId}/`
+          : `transaction/salestransaction/${transactionId}/`
+        const { data } = await api.get(url)
+        setInvoiceData(data)
+      } catch {
         setError("Failed to fetch invoice data")
+      } finally {
         setLoading(false)
       }
-    }
-
-    fetchInvoiceData()
+    })()
   }, [transactionId])
 
   const handlePrint = () => {
+    if (!receiptRef.current) { window.print(); return }
+    const contentHeightPx = receiptRef.current?.scrollHeight
+    // Measure exact pixel height of receipt content
+    // Convert px to mm (1px = 0.264583mm at 96dpi)
+    const contentHeightMm = Math.ceil(contentHeightPx * 0.264583) + 5 // +5mm buffer
+
+    // Inject a one-time <style> that sets the exact page height
+    const styleId = "dynamic-print-height"
+    let el = document.getElementById(styleId)
+    if (!el) {
+      el = document.createElement("style")
+      el.id = styleId
+      document.head.appendChild(el)
+    }
+    el.textContent = `
+      @media print {
+        @page {
+          size: 80mm ${contentHeightMm}mm;
+          margin: 0;
+        }
+      }
+    `
+
     window.print()
+
+    // Clean up after print dialog closes
+    setTimeout(() => el.remove(), 2000)
   }
 
-  if (loading) return <div>Loading invoice...</div>
-  if (error) return <div>{error}</div>
+  if (loading)      return <div style={{ padding: "2rem", textAlign: "center" }}>Loading invoice…</div>
+  if (error)        return <div style={{ padding: "2rem", color: "red" }}>{error}</div>
   if (!invoiceData) return null
 
   return (
-    <InvoiceContainer>
-      <InvoiceHeader>
-        <CompanyInfo>
-          <h1>{invoiceData.enterprise_name}</h1>
-          <p>{invoiceData.enterprise_address}</p>
-          <p>Phone: (+977) {invoiceData.enterprise_contact}</p>
-          {/* <p>Email: info@digitechenterprises.com</p> */}
-        </CompanyInfo>
-        <InvoiceInfo>
-          <h2>Invoice</h2>
-          <p>Invoice: {invoiceData.bill_no}</p>
-          <p>Date: {format(new Date(invoiceData.date), "dd/MM/yyyy")}</p>
-        </InvoiceInfo>
-      </InvoiceHeader>
+    <>
+      <PrintStyle />
 
-      <BillTo>
-        <h3>Bill To:</h3>
-        <p>{invoiceData.name}</p>
-        <p>Phone: {invoiceData.phone_number}</p>
-      </BillTo>
+      <ReceiptWrap ref={receiptRef}>
+        {/* Header */}
+        <Row style={{ marginBottom: 4 }}>
+          <div>
+            <CompanyName>{invoiceData.enterprise_name}</CompanyName>
+            <Small>
+              {invoiceData.enterprise_address}<br />
+              Phone: (+977) {invoiceData.enterprise_contact}
+            </Small>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <InvoiceLabel>Invoice</InvoiceLabel>
+            <Small>
+              #{invoiceData.bill_no}<br />
+              {format(new Date(invoiceData.date), "dd/MM/yyyy")}
+            </Small>
+          </div>
+        </Row>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-          <TableHead>S.N</TableHead>
-            <TableHead>Item</TableHead>
-            <TableHead className="text-right">Quantity</TableHead>
-            <TableHead className="text-right">Unit Price</TableHead>
-            <TableHead className="text-right">Total</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {invoiceData.sales.map((item,index) => (
-            
-            <TableRow key={item.id}>
-              <TableCell>{index+1}</TableCell>
-              <TableCell>{item.phone_name ? item.phone_name + " (" + item.imei_number + ")"  : item.product_name}</TableCell>
-              <TableCell className="text-right">{item.quantity || 1}</TableCell>
-              <TableCell className="text-right">
-                {item.unit_price}
-              </TableCell>
-              <TableCell className="text-right">
-                {item.total_price? item.total_price : item.unit_price}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+        <Dash />
 
-      <TotalAmount>
-        <p>Total Amount: {invoiceData.total_amount}</p>
-        {/* <p>Payment Method: {invoiceData.method}</p> */}
-      </TotalAmount>
+        {/* Bill To */}
+        <Section>
+          <SectionTitle>Bill To:</SectionTitle>
+          {invoiceData.name         && <div>{invoiceData.name}</div>}
+          {invoiceData.phone_number && <div>Phone: {invoiceData.phone_number}</div>}
+        </Section>
 
-      <ThankYou>
-        <p>Thank you for your business!</p>
-      </ThankYou>
+        <Dash />
 
-      <PrintButton onClick={handlePrint}>
-        <Printer className="mr-2 h-4 w-4" />
-        Print Invoice
-      </PrintButton>
-    </InvoiceContainer>
+        {/* Items */}
+        <RTable>
+          <thead>
+            <tr>
+              <Th style={{ width: 14 }}>#</Th>
+              <Th>Item</Th>
+              <Th $r style={{ width: 22 }}>Qty</Th>
+              <Th $r style={{ width: 38 }}>Price</Th>
+              <Th $r style={{ width: 38 }}>Total</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {invoiceData.sales.map((item, i) => {
+              const label = item.phone_name
+                ? `${item.phone_name} (${item.imei_number})`
+                : item.product_name
+              const total = item.total_price ?? item.unit_price
+              return (
+                <tr key={item.id}>
+                  <Td>{i + 1}</Td>
+                  <Td>{label}</Td>
+                  <Td $r>{item.quantity || 1}</Td>
+                  <Td $r>{item.unit_price}</Td>
+                  <Td $r>{total}</Td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </RTable>
+
+        <Dash />
+
+        <TotalRow>
+          <span>Total Amount:</span>
+          <span>{invoiceData.total_amount}</span>
+        </TotalRow>
+
+        <Dash />
+
+        <Center>Thank you for your business!</Center>
+
+        <div className="no-print" style={{ marginTop: "1rem" }}>
+          <Button onClick={handlePrint} style={{ width: "100%" }}>
+            <Printer size={16} style={{ marginRight: 8 }} />
+            Print Invoice
+          </Button>
+        </div>
+
+      </ReceiptWrap>
+    </>
   )
 }
 
 export default Invoice
-
