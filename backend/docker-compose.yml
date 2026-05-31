@@ -8,9 +8,9 @@ services:
     env_file: .env
     environment:
       # Proxy & SSL Settings
-      - VIRTUAL_HOST=api.aamakonana.com
+      - VIRTUAL_HOST=ezinventory.dgtech.com.np
       - VIRTUAL_PORT=8000
-      - LETSENCRYPT_HOST=api.aamakonana.com
+      - LETSENCRYPT_HOST=ezinventory.dgtech.com.np
       - LETSENCRYPT_EMAIL=bibhab.dev@gmail.com
 
       # Shared Database Connection

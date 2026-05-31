@@ -2457,6 +2457,7 @@ class ClosingCashView(APIView):
         branch_id = request.GET.get('branch')
         today = timezone.now().date()
         qs = ClosingCash.objects.filter(enterprise=enterprise, date=today)
+
         if branch_id:
             qs = qs.filter(branch_id=branch_id)
         serializer = ClosingCashSerializer(qs, many=True)
