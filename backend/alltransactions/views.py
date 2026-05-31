@@ -1845,7 +1845,8 @@ class ExpensesView(APIView):
         enterprise = user.employee.enterprise
         data['enterprise'] = enterprise.id 
         # Record who created the expense for consistency with other flows
-        data['employee'] = getattr(user, 'employee', None)
+        employee = request.user.employee.id
+        data['employee'] = employee
         serializer = ExpensesSerializer(data=data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
