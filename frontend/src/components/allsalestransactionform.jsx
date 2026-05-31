@@ -2098,7 +2098,7 @@ function AllSalesTransactionForm({ isExchange = false, isEdit = false }) {
                             <div className="bg-slate-800 border border-slate-600 rounded p-4 mt-4">
                               {/* <div className="text-xs uppercase tracking-wide text-slate-400 mb-2">Only for change amount</div> */}
                               <Label className="text-slate-300 mb-1">
-                                Amount Received (cash):
+                                If needed to calculate change, Amount Received (cash):
                               </Label>
                               <Input
                                 type="number"
