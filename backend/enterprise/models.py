@@ -20,6 +20,7 @@ class Enterprise(models.Model):
     contact_phone = models.CharField(max_length=20, blank=True, null=True)
     licensed = models.BooleanField(default=False)
     licensed_until = models.DateField(blank=True, null=True)
+    loyalty_percentage = models.FloatField(default=0)
     max_alowed_employees = models.PositiveIntegerField(default=0)
     date_format_preference = models.CharField(
         max_length=2,
@@ -131,7 +132,6 @@ class Employee(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['name', 'employee_code']
         constraints = [
             models.UniqueConstraint(
                 fields=['enterprise', 'employee_code'],
