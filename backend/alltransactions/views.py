@@ -1702,7 +1702,7 @@ class ProductTransferView(APIView):
             'sales': sales,
             'bill_no': '000',
             'method': 'transfer',
-            'employee': request.user.employee
+            'employee': request.user.employee.id
         }
 
         purchase_data = {
@@ -1712,7 +1712,7 @@ class ProductTransferView(APIView):
             'purchase': purchase,
             'bill_no': '000',
             'method': 'transfer',
-            'employee': request.user.employee
+            'employee': request.user.employee.id
         }
         # sale_transaction = SalesTransactionSerializer().create({
         #     'enterprise': enterprise,
@@ -2011,7 +2011,7 @@ class WithdrawalView(APIView):
         user = request.user
         enterprise = user.employee.enterprise
         data['enterprise'] = enterprise.id
-        data['employee'] = getattr(user, 'employee', None)
+        data['employee'] = getattr(user, 'employee', None).id
         serializer = WithdrawalSerializer(data=data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()

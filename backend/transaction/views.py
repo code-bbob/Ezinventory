@@ -350,12 +350,8 @@ class VendorView(APIView):
         user = request.user
         enterprise = user.employee.enterprise
         vendors = Vendor.objects.filter(enterprise=enterprise)
-        print("########################",vendors)
-        for vendor in vendors:
-            print(vendor.branch)
         if branch:
             vendors = vendors.filter(branch=branch)
-        print("******************",vendors)
         serializer = VendorSerializer(vendors, many=True)
         return Response(serializer.data)
     
