@@ -200,7 +200,8 @@ class SalesTransactionView(APIView):
             data['amount_paid'] = 0
             data['cash_amount'] = 0
             data['card_amount'] = 0
-            data['online_amount'] = 0
+            data['fonepay_amount'] = 0
+            data['esewa_amount'] = 0
             data['credited_amount'] = 0
 
         serializer = SalesTransactionSerializer(data=data)
@@ -336,7 +337,8 @@ class SalesTransactionView(APIView):
             new_data['amount_paid'] = 0
             new_data['cash_amount'] = 0
             new_data['card_amount'] = 0
-            new_data['online_amount'] = 0
+            new_data['fonepay_amount'] = 0
+            new_data['esewa_amount'] = 0
             new_data['credited_amount'] = 0
             new_data['method'] = 'loyalty'
 
@@ -366,7 +368,8 @@ class SalesTransactionView(APIView):
 
                 # Apply effects of the updated transaction to the (new) customer
                 # If loyalty was used in this update, deduct points
-                new_customer.refresh_from_db()  # Ensure we have the latest data
+                if new_customer:
+                    new_customer.refresh_from_db()  # Ensure we have the latest data
                 if (sale.method == 'loyalty') and customer_for_loyalty:
                     points_required = Decimal(str(loyalty_points_used)) if loyalty_points_used > 0 else Decimal(str(sale.total_amount or 0))
                     deduction = points_required
@@ -837,7 +840,8 @@ class SalesReportView(APIView):
         total_discount = 0  # sum of per-line discount amounts
         cash_sales = 0
         card_sales = 0
-        online_sales = 0
+        fonepay_sales = 0
+        esewa_sales = 0
         st = []
         write_off = 0
         rows = []
@@ -848,7 +852,8 @@ class SalesReportView(APIView):
                 st.append(sale.sales_transaction.id)
                 cash_sales += sale.sales_transaction.cash_amount
                 card_sales += sale.sales_transaction.card_amount
-                online_sales += sale.sales_transaction.online_amount
+                fonepay_sales += sale.sales_transaction.fonepay_amount
+                esewa_sales += sale.sales_transaction.esewa_amount
             line_subtotal = (sale.unit_price or 0) * (sale.quantity or 0)
             line_discount = sale.discount or 0
             line_net = line_subtotal - line_discount
@@ -878,7 +883,8 @@ class SalesReportView(APIView):
             "net_sales": net_sales - write_off,
             "cash_sales": cash_sales,
             "card_sales": card_sales,
-            "online_sales": online_sales,
+            "fonepay_sales": fonepay_sales,
+            "esewa_sales": esewa_sales
         })
         return Response(rows)
 
@@ -1691,10 +1697,6 @@ class ProductTransferView(APIView):
                     'unit_price': product.get('unit_price', 0),
                 })
 
-        print("This is sales: ", sales)
-        print("###########################\nThis is purchases: ", purchase)
-
-
         sales_data = {
             'enterprise': enterprise,
             'branch': from_branch,
@@ -2100,7 +2102,8 @@ class IncomeExpenseReportView(APIView):
         start_date = request.GET.get('start_date')
         end_date = request.GET.get('end_date')
         total_cash_income = 0
-        total_online_income = 0
+        total_fonepay_income = 0
+        total_esewa_income = 0
         total_card_income = 0
         total_cash_expense = 0
         total_online_expense = 0
@@ -2151,13 +2154,15 @@ class IncomeExpenseReportView(APIView):
                 'method': sale.method,
                 'cash_amount': sale.cash_amount,
                 'card_amount': sale.card_amount,
-                'online_amount': sale.online_amount,
+                'fonepay_amount': sale.fonepay_amount,
+                'esewa_amount': sale.esewa_amount,
                 'type': 'Sale',
                 'date': sale.date
             })
             total_cash_income += sale.cash_amount or 0
             total_card_income += sale.card_amount or 0
-            total_online_income += sale.online_amount or 0
+            total_fonepay_income += sale.fonepay_amount or 0
+            total_esewa_income += sale.esewa_amount or 0
             total_income += sale.amount_paid or 0
 
         orders = Order.objects.filter(enterprise=enterprise, received_date__range=(report_start_date, report_end_date))
@@ -2181,12 +2186,15 @@ class IncomeExpenseReportView(APIView):
                 total_cash_income += order.advance_received or 0
             elif order.advance_method == 'card':
                 total_card_income += order.advance_received or 0
-            elif order.advance_method == 'online':
-                total_online_income += order.advance_received or 0
+            elif order.advance_method == 'fonepay':
+                total_fonepay_income += order.advance_received or 0
+            elif order.advance_method == 'esewa':
+                total_esewa_income += order.advance_received or 0
             elif order.advance_method == 'mixed':
                 total_cash_income += order.cash_advance or 0
                 total_card_income += order.card_advance or 0
-                total_online_income += order.online_advance or 0
+                total_fonepay_income += order.fonepay_advance or 0
+                total_esewa_income += order.esewa_advance or 0
             total_income += order.advance_received or 0
 
         remaining_payment_orders = Order.objects.filter(enterprise=enterprise, remaining_received_date__range=(report_start_date, report_end_date))
@@ -2211,12 +2219,15 @@ class IncomeExpenseReportView(APIView):
                 total_cash_income += order.remaining_received or 0
             elif order.remaining_received_method == 'card':
                 total_card_income += order.remaining_received or 0
-            elif order.remaining_received_method == 'online':
-                total_online_income += order.remaining_received or 0
+            elif order.remaining_received_method == 'fonepay':
+                total_fonepay_income += order.remaining_received or 0
+            elif order.remaining_received_method == 'esewa':
+                total_esewa_income += order.remaining_received or 0
             elif order.remaining_received_method == 'mixed':
                 total_cash_income += order.cash_remaining or 0
                 total_card_income += order.card_remaining or 0
-                total_online_income += order.online_remaining or 0
+                total_fonepay_income += order.fonepay_remaining or 0
+                total_esewa_income += order.esewa_remaining or 0
             total_income += order.remaining_received or 0
 
         dts = DebtorTransaction.objects.filter(enterprise=enterprise, date__range=(report_start_date, report_end_date))
@@ -2245,11 +2256,16 @@ class IncomeExpenseReportView(APIView):
                     total_card_income += dt.amount or 0
                 else:
                     total_card_expense += -dt.amount or 0
-            elif dt.method == 'online':
+            elif dt.method == 'fonepay':
                 if dt.amount > 0:
-                    total_online_income += dt.amount or 0
+                    total_fonepay_income += dt.amount or 0
                 else:
-                    total_online_expense += -dt.amount or 0
+                    total_fonepay_expense += -dt.amount or 0
+            elif dt.method == 'esewa':
+                if dt.amount > 0:
+                    total_esewa_income += dt.amount or 0
+                else:
+                    total_esewa_expense += -dt.amount or 0
             if dt.amount > 0:
                 total_income += dt.amount or 0
             else:
@@ -2309,7 +2325,8 @@ class IncomeExpenseReportView(APIView):
             'transactions' : list1,
             'total_cash_income': total_cash_income,
             'total_cash_expense': total_cash_expense,
-            'total_online_income': total_online_income,
+            'total_fonepay_income': total_fonepay_income,
+            'total_esewa_income': total_esewa_income,
             'total_online_expense': total_online_expense,
             'total_card_income': total_card_income,
             'total_card_expense': total_card_expense,
@@ -2429,7 +2446,7 @@ class ClosingCashView(APIView):
         if serializer.is_valid():
             serializer.save()
 
-            trim_todays_sales(branch=branch_obj, date=today)
+            # trim_todays_sales(branch=branch_obj, date=today)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

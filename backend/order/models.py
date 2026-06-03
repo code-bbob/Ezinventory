@@ -13,21 +13,25 @@ class Order(models.Model):
     advance_method = models.CharField(max_length=50, choices=[
         ('cash', 'Cash'),
         ('card', 'Card'),
-        ('online', 'Online Payment'),
+        ('fonepay', 'Fonepay'),
+        ('esewa', 'Esewa'),
         ('mixed', 'Mixed'),
     ], default='cash')
     cash_advance = models.FloatField(null=True, blank=True, default=0)
-    online_advance = models.FloatField(null=True, blank=True, default=0)
+    fonepay_advance = models.FloatField(null=True, blank=True, default=0)
+    esewa_advance = models.FloatField(null=True, blank=True, default=0)
     card_advance = models.FloatField(null=True, blank=True, default=0)
     remaining_received = models.FloatField(null=True, blank=True)
     remaining_received_method = models.CharField(max_length=50, choices=[
         ('cash', 'Cash'),
         ('card', 'Card'),
-        ('online', 'Online'),
+        ('fonepay', 'Fonepay'),
+        ('esewa', 'Esewa'),
         ('mixed', 'Mixed'),
     ], default='cash')
     cash_remaining = models.FloatField(null=True, blank=True, default=0)
-    online_remaining = models.FloatField(null=True, blank=True, default=0)
+    fonepay_remaining = models.FloatField(null=True, blank=True, default=0)
+    esewa_remaining = models.FloatField(null=True, blank=True, default=0)
     card_remaining = models.FloatField(null=True, blank=True, default=0)
     remaining_received_date = models.DateField(null=True,blank=True)
 

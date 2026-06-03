@@ -61,7 +61,8 @@ const AllIncomeExpenseReport = () => {
   const navigate = useNavigate();
   const methodColor = {
     cash: "text-green-400",
-    online: "text-blue-400",
+    esewa: "text-blue-400",
+    fonepay: "text-cyan-400",
     card: "text-purple-400",
     mixed: "text-yellow-400",
     default: "text-slate-200",
@@ -93,7 +94,8 @@ const AllIncomeExpenseReport = () => {
       setMessage(response.data.message || "");
       let cash = response.data.total_cash_income;
       let card = response.data.total_card_income;
-      let online = response.data.total_online_income;
+      let fonepay = response.data.total_fonepay_income;
+      let esewa = response.data.total_esewa_income;
       let cash_expense = response.data.total_cash_expense;
       let card_expense = response.data.total_card_expense;
       let online_expense = response.data.total_online_expense;
@@ -117,7 +119,8 @@ const AllIncomeExpenseReport = () => {
         totals: {
           cash,
           card,
-          online,
+          fonepay,
+          esewa,
           cash_expense,
           card_expense,
           online_expense,
@@ -147,7 +150,7 @@ const AllIncomeExpenseReport = () => {
   const checkApprovalStatus = async () => {
     try {
       const response = await api.get("alltransaction/closing-cash/", {
-        params: { branch: branchId }
+        params: { branch: branchId },
       });
       // If closing cash exists for today, isApproved = true (disable approval button)
       // If no closing cash yet, isApproved = false (enable approval button)
@@ -261,7 +264,11 @@ const AllIncomeExpenseReport = () => {
                 } text-white border-none disabled:opacity-50`}
               >
                 <CheckCircle className="mr-2 h-4 w-4" />{" "}
-                {approveStatus ? approveStatus : isApproved ? "Approved" : "Approve"}
+                {approveStatus
+                  ? approveStatus
+                  : isApproved
+                    ? "Approved"
+                    : "Approve"}
               </Button>
             </div>
           )}
@@ -427,9 +434,8 @@ const AllIncomeExpenseReport = () => {
                     currency: "NPR",
                   })}
                 </span>
-				
               </div>
-			  <div className="flex justify-between mb-2">
+              <div className="flex justify-between mb-2">
                 <span className="font-semibold text-white print:text-black">
                   Cash Income :
                 </span>
@@ -440,18 +446,29 @@ const AllIncomeExpenseReport = () => {
                   })}
                 </span>
               </div>
-			   <div className="flex justify-between mb-2">
+              <div className="flex justify-between mb-2">
                 <span className="font-semibold text-white print:text-black">
-                  Online Income:
+                  Esewa Income:
                 </span>
                 <span className="text-white print:text-black">
-                  {data.totals.online.toLocaleString("en-US", {
+                  {data.totals.esewa.toLocaleString("en-US", {
                     style: "currency",
                     currency: "NPR",
                   })}
                 </span>
               </div>
-              {/* <div className="flex justify-between mb-2"><span className="font-semibold text-white print:text-black">Total Online Expense:</span><span className="text-white print:text-black">{data.totals.online_expense.toLocaleString('en-US',{style:'currency',currency:'NPR'})}</span></div> */}
+
+              <div className="flex justify-between mb-2">
+                <span className="font-semibold text-white print:text-black">
+                  Fonepay Income:
+                </span>
+                <span className="text-white print:text-black">
+                  {data.totals.fonepay.toLocaleString("en-US", {
+                    style: "currency",
+                    currency: "NPR",
+                  })}
+                </span>
+              </div>
               <div className="flex justify-between mb-2">
                 <span className="font-semibold text-white print:text-black">
                   Card Income:
@@ -474,7 +491,7 @@ const AllIncomeExpenseReport = () => {
                   })}
                 </span>
               </div>
-			  <div className="flex justify-between mb-2">
+              <div className="flex justify-between mb-2">
                 <span className="font-semibold text-blue-500 text-lg print:text-black">
                   Total Withdrawal:
                 </span>
@@ -485,7 +502,6 @@ const AllIncomeExpenseReport = () => {
                   })}
                 </span>
               </div>
-              
             </div>
             <div className="w-full sm:w-80 bg-slate-800 p-4 rounded-lg print:bg-gray-100">
               {/* <div className="flex justify-between mb-2"><span className="font-semibold text-white print:text-black">Transactions:</span><span className="text-white print:text-black">{data.totals.count}</span></div> */}
@@ -537,10 +553,8 @@ const AllIncomeExpenseReport = () => {
               </div>
 
               <div className="flex justify-between mb-2 border-t border-slate-600 pt-2"></div>
-             
+
               {/* <div className="flex justify-between mb-2"><span className="font-semibold text-white print:text-black">Total Card Expense:</span><span className="text-white print:text-black">{data.totals.card_expense.toLocaleString('en-US',{style:'currency',currency:'NPR'})}</span></div> */}
-              
-              
             </div>
           </div>
 
