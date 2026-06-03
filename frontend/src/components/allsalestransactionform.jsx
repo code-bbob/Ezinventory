@@ -10,10 +10,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, Trash2, Check, ChevronsUpDown, Menu } from "lucide-react";
+import { PlusCircle, Trash2, Check, ChevronsUpDown, Menu, ArrowLeft } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
@@ -121,6 +122,14 @@ function AllSalesTransactionForm({ isExchange = false, isEdit = false }) {
   const [customerCheckMessage, setCustomerCheckMessage] = useState("");
   const [showNewCustomerDialog, setShowNewCustomerDialog] = useState(false);
   const [originalSaleMethod, setOriginalSaleMethod] = useState(null); // Track original method from edit load
+
+  // --- Return flow state (only used in isEdit mode) ---
+  const [returns, setReturns] = useState([]);
+  const [returned, setReturned] = useState(false); // true if any line is already returned in DB
+  const [returnDialogOpen, setReturnDialogOpen] = useState(false);
+  const [currentReturnSale, setCurrentReturnSale] = useState(null);
+  const [returnQuantity, setReturnQuantity] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false); // delete confirm
   const [newCustomerData, setNewCustomerData] = useState({
     customer_name: "",
     phone_number: "",
@@ -349,7 +358,11 @@ function AllSalesTransactionForm({ isExchange = false, isEdit = false }) {
               }
             }
 
+            // Track if any line is already returned in DB
+            if (saleLine.returned) setReturned(true);
+
             return {
+              id: saleLine.id, // keep the server-side id for return API
               product: saleLine.product?.toString() || "",
               unit_price: saleLine.unit_price?.toString() || "",
               quantity: saleLine.quantity?.toString() || "",
@@ -357,6 +370,7 @@ function AllSalesTransactionForm({ isExchange = false, isEdit = false }) {
               discount_value: discountValue,
               line_subtotal: lineSubtotal ? lineSubtotal.toFixed(2) : "",
               total_price: saleLine.total_price?.toString() || "",
+              returned: Boolean(saleLine.returned),
             };
           });
 
@@ -377,6 +391,7 @@ function AllSalesTransactionForm({ isExchange = false, isEdit = false }) {
                     discount_value: "",
                     line_subtotal: "",
                     total_price: "",
+                    returned: false,
                   },
                 ],
             method: data.method || "cash",
@@ -505,10 +520,85 @@ function AllSalesTransactionForm({ isExchange = false, isEdit = false }) {
   const handleChange = (index, e) => {
     const { name, value } = e.target;
     const newSales = [...formData.sales];
+    if (isEdit && newSales[index]?.returned) return; // don't allow editing returned lines
     newSales[index] = { ...newSales[index], [name]: value };
 
     recalcLine(newSales[index]);
     setFormData({ ...formData, sales: newSales });
+  };
+
+  // --- Return handlers (only used in isEdit mode) ---
+  const handleReturnClick = (sale) => {
+    setCurrentReturnSale(sale);
+    setReturnQuantity("");
+    setError(null);
+    setReturnDialogOpen(true);
+  };
+
+  const handleReturnConfirm = () => {
+    if (!currentReturnSale || !returnQuantity) return;
+    const qty = parseFloat(returnQuantity);
+    const maxQty = parseFloat(currentReturnSale.quantity);
+    if (qty <= 0 || qty > maxQty) {
+      setError(`Return quantity must be between 1 and ${maxQty}`);
+      return;
+    }
+    setReturns((r) => [...r, { id: currentReturnSale.id, quantity: qty }]);
+    setFormData((prev) => ({
+      ...prev,
+      sales: prev.sales.map((s) =>
+        s.id === currentReturnSale.id ? { ...s, returned: true } : s
+      ),
+    }));
+    setReturnDialogOpen(false);
+    setCurrentReturnSale(null);
+    setReturnQuantity("");
+    setError(null);
+  };
+
+  const handleReturn = async () => {
+    setSubLoading(true);
+    try {
+      const returnedAmount = returns.reduce((sum, returnedItem) => {
+        const matchedSale = formData.sales.find((s) => s.id === returnedItem.id);
+        if (!matchedSale) return sum;
+        const qty = parseFloat(returnedItem.quantity) || 0;
+        const saleQty = parseFloat(matchedSale.quantity) || 0;
+        const saleTotal = parseFloat(matchedSale.total_price) || 0;
+        const perUnit = saleQty > 0 ? saleTotal / saleQty : (parseFloat(matchedSale.unit_price) || 0);
+        return sum + qty * perUnit;
+      }, 0);
+
+      await api.post("alltransaction/sales-return/", {
+        returns,
+        sales_transaction_id: salesId,
+        branch: branchId,
+      });
+      navigate(`/sales/exchange/form/branch/${branchId}`, {
+        state: {
+          previous_balance: Number(returnedAmount.toFixed(2)),
+          source_sales_id: salesId,
+          returned_lines: returns,
+        },
+      });
+    } catch (err) {
+      console.error(err);
+      setError("Failed to process return. Please try again.");
+    } finally {
+      setSubLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      setSubLoading(true);
+      await api.delete(`alltransaction/salestransaction/${salesId}/?flag=true`);
+      navigate("/sales/branch/" + branchId);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to delete sales transaction. Please try again.");
+      setSubLoading(false);
+    }
   };
 
   const handleDiscountTypeChange = (index, value) => {
@@ -1207,7 +1297,7 @@ function AllSalesTransactionForm({ isExchange = false, isEdit = false }) {
           <div className="bg-slate-800 p-6 rounded-lg shadow-lg">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl lg:text-3xl font-bold mb-6 text-white">
-                {isExchange ? "Sale Exchange" : "Add Sales Transaction"}
+                {isExchange ? "Sale Exchange" : isEdit ? "Edit Sales Transaction" : "Add Sales Transaction"}
               </h2>
               <Button
                 type="button"
@@ -1316,7 +1406,10 @@ function AllSalesTransactionForm({ isExchange = false, isEdit = false }) {
                   </TableHeader>
                   <TableBody>
                     {formData.sales.map((sale, index) => (
-                      <TableRow key={index} className="border-slate-600">
+                      <TableRow
+                        key={index}
+                        className={`border-slate-600 ${isEdit && sale.returned ? "opacity-50" : ""}`}
+                      >
                         <TableCell className="w-12 text-slate-200">
                           {index + 1}
                         </TableCell>
@@ -1396,7 +1489,22 @@ function AllSalesTransactionForm({ isExchange = false, isEdit = false }) {
                                 </PopoverContent>
                               </Popover>
                             </div>
-                            {formData.sales.length > 1 && (
+                            {isEdit && !sale.returned && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="text-white bg-purple-500  hover:scale-105 text-xs px-2 py-1"
+                                title="Return this item"
+                                onClick={() => handleReturnClick(sale)}
+                              >
+                                Return
+                              </Button>
+                            )}
+                            {isEdit && sale.returned && (
+                              <span className="text-xs text-amber-400 px-2">Returned</span>
+                            )}
+                            {!isEdit && formData.sales.length > 1 && (
                               <Button
                                 type="button"
                                 size="icon"
@@ -1416,6 +1524,7 @@ function AllSalesTransactionForm({ isExchange = false, isEdit = false }) {
                             name="unit_price"
                             value={sale.unit_price}
                             onChange={(e) => handleChange(index, e)}
+                            disabled={isEdit && sale.returned}
                             className="bg-slate-600 border-slate-500 text-white  font-mono tabular-nums"
                             placeholder="0.00"
                             required
@@ -1427,6 +1536,7 @@ function AllSalesTransactionForm({ isExchange = false, isEdit = false }) {
                             name="quantity"
                             value={sale.quantity}
                             onChange={(e) => handleChange(index, e)}
+                            disabled={isEdit && sale.returned}
                             className="bg-slate-600 border-slate-500 text-white  font-mono tabular-nums"
                             placeholder="0"
                             required
@@ -1444,6 +1554,7 @@ function AllSalesTransactionForm({ isExchange = false, isEdit = false }) {
                           <div className="flex">
                             <Select
                               value={sale.discount_type}
+                              disabled={isEdit && sale.returned}
                               onValueChange={(value) =>
                                 handleDiscountTypeChange(index, value)
                               }
@@ -1470,6 +1581,7 @@ function AllSalesTransactionForm({ isExchange = false, isEdit = false }) {
                               type="number"
                               name="discount_value"
                               value={sale.discount_value}
+                              disabled={isEdit && sale.returned}
                               onChange={(e) => handleChange(index, e)}
                               className="bg-slate-600 rounded-none rounded-r border-slate-500 text-white flex-1  font-mono tabular-nums"
                               placeholder={
@@ -1522,6 +1634,64 @@ function AllSalesTransactionForm({ isExchange = false, isEdit = false }) {
                 Proceed to Payment (Enter)
               </Button>
             </form>
+
+            {/* ── Edit-mode only actions ── */}
+            {isEdit && (
+              <div className="mt-4 space-y-3">
+                {returned && (
+                  <p className="text-amber-400 text-sm">
+                    Some lines have already been returned. Delete the sales return record if you need to make further changes.
+                  </p>
+                )}
+
+                {/* Process Returns */}
+                <Button
+                  type="button"
+                  onClick={handleReturn}
+                  disabled={returns.length === 0 || subLoading || returned}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {subLoading ? "Processing..." : `Process Returns (${returns.length} selected)`}
+                </Button>
+
+                {/* Delete Transaction */}
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      type="button"
+                      disabled={subLoading || returned}
+                      className="w-full bg-red-600 hover:bg-red-700 text-white"
+                    >
+                      Delete Transaction
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px] bg-slate-800 text-white">
+                    <DialogHeader>
+                      <DialogTitle>Confirm Delete</DialogTitle>
+                      <DialogDescription className="text-slate-300">
+                        This action cannot be undone. The transaction will be permanently deleted and stock will be restored.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="flex justify-end space-x-2 mt-4">
+                      <Button
+                        variant="outline"
+                        className="bg-white text-black"
+                        onClick={() => setIsDialogOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleDelete}
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                        disabled={subLoading}
+                      >
+                        {subLoading ? "Deleting..." : "Delete Transaction"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            )}
 
             <NewProductDialog
               open={showNewProductDialog}
@@ -2641,6 +2811,64 @@ function AllSalesTransactionForm({ isExchange = false, isEdit = false }) {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+
+            {/* Return Quantity Dialog — only rendered in edit mode */}
+            {isEdit && (
+              <Dialog open={returnDialogOpen} onOpenChange={setReturnDialogOpen}>
+                <DialogContent className="sm:max-w-[400px] bg-slate-800 text-white">
+                  <DialogHeader>
+                    <DialogTitle>Return Item</DialogTitle>
+                    <DialogDescription className="text-slate-300">
+                      Enter the quantity to return for{" "}
+                      <span className="text-white font-medium">
+                        {currentReturnSale
+                          ? products.find(
+                              (p) => p.id.toString() === currentReturnSale.product
+                            )?.name || "this item"
+                          : "this item"}
+                      </span>
+                      . Maximum allowed: {currentReturnSale?.quantity}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="mt-4">
+                    <Label htmlFor="returnQuantity" className="text-sm mb-1 block">
+                      Quantity to return
+                    </Label>
+                    <Input
+                      id="returnQuantity"
+                      type="number"
+                      value={returnQuantity}
+                      min="1"
+                      max={currentReturnSale?.quantity}
+                      onChange={(e) => setReturnQuantity(e.target.value)}
+                      className="bg-slate-600 border-slate-500 text-white"
+                      autoFocus
+                    />
+                  </div>
+                  {error && <p className="text-red-400 mt-2 text-sm">{error}</p>}
+                  <DialogFooter className="flex justify-end space-x-2 mt-4">
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        setReturnDialogOpen(false);
+                        setError(null);
+                      }}
+                      variant="outline"
+                      className="text-white bg-slate-600 hover:bg-slate-500 hover:text-white border-slate-500"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={handleReturnConfirm}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      Confirm Return
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </div>
       </div>
