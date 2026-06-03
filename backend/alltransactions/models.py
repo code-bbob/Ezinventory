@@ -262,6 +262,7 @@ class DebtorTransaction(models.Model):
     # base = models.BooleanField(default=False)
     type = models.CharField(max_length=20,choices=(('base','base'),('return','return'),('payment','payment')),default='base')
     all_sales_transaction = models.ForeignKey(SalesTransaction, on_delete=models.CASCADE,related_name="all_debtor_transaction",null=True,blank=True)
+    sales_transaction = models.ForeignKey('transaction.SalesTransaction', on_delete=models.CASCADE, related_name='debtor_transactions', null=True, blank=True)
     desc = models.CharField(max_length=255, null=True, blank=True)
     inventory = models.CharField(max_length=20, choices=(('all','all'),('phone','phone')), null=True, blank=True)
     due = models.FloatField(null=True, blank=True, default=0)
