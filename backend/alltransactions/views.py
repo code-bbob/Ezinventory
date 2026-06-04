@@ -827,7 +827,6 @@ class SalesReportView(APIView):
 
         if search:
             sales = sales.filter(product__brand__name__icontains = search)
-            sales = sales.filter(sales_transaction__date__range=(first_date_of_month,today))
         
         sales = sales.order_by('sales_transaction__date','sales_transaction__method','id') 
         if not search and not start_date and not end_date:
