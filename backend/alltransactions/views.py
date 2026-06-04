@@ -809,11 +809,6 @@ class SalesReportView(APIView):
         sales = Sales.objects.filter(sales_transaction__enterprise = request.user.employee.enterprise, returned = False, sales_transaction__hidden = False)
         if branch:
             sales = sales.filter(sales_transaction__branch = branch)
-        if search:
-            first_date_of_month = timezone.now().date().replace(day=1)
-            today = timezone.now().date()
-            sales = sales.filter(product__brand__name__icontains = search)
-            sales = sales.filter(sales_transaction__date__range=(first_date_of_month,today))
         
         if product:
             sales = sales.filter(product__name__startswith = product)
@@ -829,6 +824,10 @@ class SalesReportView(APIView):
         elif end_date and not start_date:
             end_date = parse_date(end_date)
             sales = sales.filter(sales_transaction__date__lte=end_date)
+
+        if search:
+            sales = sales.filter(product__brand__name__icontains = search)
+            sales = sales.filter(sales_transaction__date__range=(first_date_of_month,today))
         
         sales = sales.order_by('sales_transaction__date','sales_transaction__method','id') 
         if not search and not start_date and not end_date:
@@ -900,17 +899,20 @@ class PurchaseReportView(APIView):
         purchases = Purchase.objects.filter(purchase_transaction__enterprise=request.user.employee.enterprise)
         if branch:
             purchases = purchases.filter(purchase_transaction__branch=branch)
-        if search:
-            first_date_of_month = timezone.now().date().replace(day=1)
-            today = timezone.now().date()
-            purchases = purchases.filter(product__brand__name__icontains=search)
-            purchases = purchases.filter(purchase_transaction__date__range=(first_date_of_month, today))
         if product:
             purchases = purchases.filter(product__name__startswith=product)
         if start_date and end_date:
             start_date = parse_date(start_date)
             end_date = parse_date(end_date)
             purchases = purchases.filter(purchase_transaction__date__range=(start_date, end_date))
+        elif start_date and not end_date:
+            start_date = parse_date(start_date)
+            purchases = purchases.filter(purchase_transaction__date__gte=start_date)
+        elif end_date and not start_date:
+            end_date = parse_date(end_date)
+            purchases = purchases.filter(purchase_transaction__date__lte=end_date)
+        if search:
+            purchases = purchases.filter(product__brand__name__icontains=search)
         if not search and not start_date and not end_date:
             purchases = purchases.filter(purchase_transaction__date=timezone.now().date())
         
