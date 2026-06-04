@@ -2311,10 +2311,11 @@ class IncomeExpenseReportView(APIView):
         sort_order = {
             "cash" : 1,
             "card" : 2,
-            "online" : 3,
-            "mixed" : 4,
-            "credit" : 5,
-            "N/A" : 6,
+            "esewa" : 3,
+            "fonepay" : 4,
+            "mixed" : 5,
+            "credit" : 6,
+            "N/A" : 7,
         }
         net_cash_in_hand = (closing_cash.amount if closing_cash else 0) + total_cash_income - total_cash_expense - total_withdrawal
         list1.sort(key=lambda x: (
