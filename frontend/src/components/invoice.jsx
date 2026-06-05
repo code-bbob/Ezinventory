@@ -117,6 +117,10 @@ const Invoice = ({ transactionId }) => {
   if (error)        return <div style={{ padding: "2rem", color: "red" }}>{error}</div>
   if (!invoiceData) return null
 
+  const hasItemDiscount = invoiceData.sales?.some(item => parseFloat(item.discount) > 0)
+  const transactionDiscount = parseFloat(invoiceData.discount) || 0
+  const hasDiscount = transactionDiscount > 0
+
   return (
     <>
       <PrintStyle />
@@ -159,6 +163,9 @@ const Invoice = ({ transactionId }) => {
               <Th>Item</Th>
               <Th $r style={{ width: 22 }}>Qty</Th>
               <Th $r style={{ width: 38 }}>Price</Th>
+              {hasItemDiscount && (
+                <Th $r style={{ width: 38 }}>Disc.</Th>
+              )}
               <Th $r style={{ width: 38 }}>Total</Th>
             </tr>
           </thead>
@@ -168,12 +175,16 @@ const Invoice = ({ transactionId }) => {
                 ? `${item.phone_name} (${item.imei_number})`
                 : item.product_name
               const total = item.total_price ?? item.unit_price
+              const itemDiscount = parseFloat(item.discount) || 0
               return (
                 <tr key={item.id}>
                   <Td>{i + 1}</Td>
                   <Td>{label}</Td>
                   <Td $r>{item.quantity || 1}</Td>
                   <Td $r>{item.unit_price}</Td>
+                  {hasItemDiscount && (
+                    <Td $r>{itemDiscount > 0 ? `${itemDiscount}` : "—"}</Td>
+                  )}
                   <Td $r>{total}</Td>
                 </tr>
               )
@@ -182,6 +193,19 @@ const Invoice = ({ transactionId }) => {
         </RTable>
 
         <Dash />
+
+        {hasDiscount && (
+          <>
+            <TotalRow style={{ fontWeight: "normal", fontSize: 11 }}>
+              <span>Subtotal:</span>
+              <span>{(parseFloat(invoiceData.total_amount) + transactionDiscount).toFixed(2)}</span>
+            </TotalRow>
+            <TotalRow style={{ fontWeight: "normal", fontSize: 11, color: "#555" }}>
+              <span>Discount:</span>
+              <span>-{transactionDiscount}</span>
+            </TotalRow>
+          </>
+        )}
 
         <TotalRow>
           <span>Total Amount:</span>
