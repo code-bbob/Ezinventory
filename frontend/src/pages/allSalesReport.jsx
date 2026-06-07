@@ -26,7 +26,8 @@ const AllSalesReport = () => {
   const navigate = useNavigate()
   const methodColor = {
     cash: "text-green-400",
-    online: "text-blue-400",
+    esewa: "text-blue-400",
+    fonepay: "text-cyan-400",
     card: "text-purple-400",
     mixed: "text-yellow-400",
     default: "text-slate-200",
@@ -315,10 +316,17 @@ const AllSalesReport = () => {
               </div>
 
               <div className="flex justify-between font-bold text-sm">
-                 <span className="text-white print:text-black">Online Sales:</span>
+                 <span className="text-white print:text-black">Fonepay Sales:</span>
                 <span className="text-white print:text-black">
-                  {data?.online_sales?.toLocaleString("en-US", { style: "currency", currency: "NPR" })}
+                  {data?.fonepay_sales?.toLocaleString("en-US", { style: "currency", currency: "NPR" })}
                 </span> 
+              </div>
+
+              <div className="flex justify-between font-bold text-sm">
+                <span className="font-bold text-sm text-white print:text-black">eSewa Sales:</span>
+                <span className="text-white print:text-black">
+                  {data?.esewa_sales?.toLocaleString("en-US", { style: "currency", currency: "NPR" })}
+                </span>
               </div>
               
               <div className="flex justify-between font-bold text-sm">
