@@ -28,6 +28,8 @@ from .models import NCM, NCMTransaction
 from .serializers import NCMSerializer, NCMTransactionSerializer
 from enterprise.models import Employee
 from enterprise.serializers import EmployeeSerializer
+from django.db.models import IntegerField
+from django.db.models.functions import Cast
 
 
 # Create your views here.
@@ -947,9 +949,12 @@ class PurchaseReportView(APIView):
      
 class NextBillNo(APIView):
     def get(self,request):
-        max_bill_no = SalesTransaction.objects.filter(
-            enterprise=request.user.employee.enterprise,
-        ).aggregate(max_bill_no=Max('bill_no'))['max_bill_no']
+        max_bill_no = (
+            SalesTransaction.objects
+            .filter(enterprise=request.user.employee.enterprise)
+            .aggregate(max_bill_no=Max(Cast('bill_no', IntegerField())))
+        )['max_bill_no']
+
         
         if max_bill_no is None:
             next_bill_no = 1
