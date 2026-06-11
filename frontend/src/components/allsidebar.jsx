@@ -230,15 +230,15 @@ export default function Sidebar() {
         { title: 'Customer Lottery', icon: Trophy, path: 'customer-lottery' }
       ]
     },
-    // {
-    //   label: 'NCM',
-    //   icon: BookCopy,
-    //   mainPath: 'ncm/statement',
-    //   items: [
-    //     { title: 'NCM Statement', icon: BookCopy, path: 'ncm/statement' },
-    //     { title: 'NCM Transactions', icon: BookCopy, path: 'ncm-transactions' }
-    //   ]
-    // },
+     {
+       label: 'NCM',
+       icon: BookCopy,
+       mainPath: 'ncm/statement',
+       items: [
+         { title: 'NCM Statement', icon: BookCopy, path: 'ncm/statement' },
+         { title: 'NCM Transactions', icon: BookCopy, path: 'ncm-transactions' }
+       ]
+     },
     {
       label: 'Transfer',
       icon: RefreshCw,
