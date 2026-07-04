@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import ClosingCash, Vendor, Purchase, PurchaseTransaction,PurchaseReturn, Sales, SalesTransaction, VendorTransactions, SalesReturn, Expenses, Customer
+from .models import ClosingCash, Vendor, Purchase, PurchaseTransaction,PurchaseReturn, Sales, SalesTransaction, VendorTransactions, SalesReturn, Expenses, Customer, IncomeTransaction
 from django.db import transaction
 from allinventory.models import Product,Brand
 from alltransactions.models import EmployeeTransactions, Debtor, DebtorTransaction, EmployeeTransactionDetail, Withdrawal, ClosingCash, NCM, NCMTransaction
@@ -458,6 +458,7 @@ class SalesTransactionSerializer(serializers.ModelSerializer):
         sales_data = validated_data.pop('sales', [])
         old_is_ncm = instance.is_ncm
         is_ncm = validated_data.get('is_ncm', instance.is_ncm)
+        old_prepaid = validated_data.get('prepaid', instance.prepaid)
 
         # Update transaction fields
         for attr, value in validated_data.items():
@@ -579,6 +580,7 @@ class SalesTransactionSerializer(serializers.ModelSerializer):
         new_method = instance.method
         new_date = instance.date
         new_total = instance.total_amount or 0
+        new_prepaid = instance.prepaid
 
         if old_date != new_date:
             dts = DebtorTransaction.objects.filter(all_sales_transaction=instance)
@@ -605,11 +607,30 @@ class SalesTransactionSerializer(serializers.ModelSerializer):
                     'all_sales_transaction': instance,
                 }
                 DebtorTransactionSerializer().create(base)
+        
+        # if old_prepaid and not new_prepaid:
+        #     ncm = NCM.objects.filter(enterprise=instance.enterprise).first()
+        #     # Handle the case where prepaid status is removed
+        #     ncm_transaction = NCMTransaction.objects.filter(all_sales_transaction=instance).first()
+        #     ncm_transaction.delete()
+
+        #     new_ncm_transaction = NCMTransactionSerializer().create({
+        #             'amount': instance.cod_amount - instance.delivery_charge,
+        #             'ncm': ncm,
+        #             'desc': desc,
+        #             'all_sales_transaction': instance,
+        #             'date': instance.date,
+        #             'enterprise': instance.enterprise,
+        #             'branch': instance.branch
+        #     })
+
+
+
 
         if is_ncm and not old_is_ncm:
             ncm = NCM.objects.filter(enterprise=instance.enterprise).first()
             ncm_amount = instance.cod_amount - instance.delivery_charge
-            if ncm_amount < instance.total_amount:
+            if ncm_amount < instance.amount_paid:
                 desc += f"(Prepaid)"
             ncm_transaction = NCMTransactionSerializer().create({
                     'amount': ncm_amount,
@@ -625,9 +646,13 @@ class SalesTransactionSerializer(serializers.ModelSerializer):
             ncm_transaction = NCMTransaction.objects.filter(all_sales_transaction=instance).first()
             ncm_transaction.delete()
 
+            print("Here recalculating NCM amount for update...")
+            print("Instance COD amount:", instance.cod_amount, "Delivery charge:", instance.delivery_charge)
             new_ncm_amount = instance.cod_amount - instance.delivery_charge
+            print("Calculated new NCM amount:", new_ncm_amount)
             print("New NCM amount:", new_ncm_amount)
-            if new_ncm_amount < instance.total_amount:
+            print("new ncm amount < amount paid?", new_ncm_amount < instance.amount_paid, new_ncm_amount, instance.amount_paid)
+            if new_ncm_amount < instance.amount_paid:
                 desc += f"(Prepaid)"
             new_ncm_transaction = NCMTransactionSerializer().create({
                     'amount': new_ncm_amount,
@@ -999,6 +1024,19 @@ class SalesReturnSerializer(serializers.ModelSerializer):
             # )
             pass
 
+        if sales_return.sales_transaction.is_ncm:
+            ncm = NCM.objects.filter(enterprise=sales_return.enterprise, branch=sales_return.branch).first()
+            ncm_amount = amount_diff
+            NCMTransactionSerializer().create({
+                'amount': ncm_amount,
+                'ncm': ncm,
+                'desc': desc,
+                'all_sales_transaction': sales_return.sales_transaction,
+                'date': sales_return.date,
+                'enterprise': sales_return.enterprise,
+                'branch': sales_return.branch
+            })
+
         return sales_return
 
     @transaction.atomic
@@ -1274,3 +1312,10 @@ class NCMTransactionSerializer(serializers.ModelSerializer):
         ncm.due = ncm.due + instance.amount if ncm.due is not None else instance.amount
         ncm.save()
         return instance
+
+class IncomeTransactionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = IncomeTransaction
+        fields = '__all__'
+

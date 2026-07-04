@@ -174,6 +174,16 @@ export default function Sidebar() {
       ]
     },
     {
+      label: 'Income',
+      icon: TrendingUp,
+      mainPath: 'income-transaction/form',
+      items: [
+        { title: 'Add Income', icon: TrendingUp, path: 'income-transaction/form' },
+        { title: 'Income Transactions', icon: TrendingUp, path: 'income-transaction' },
+        { title: 'Income Report', icon: TrendingUp, path: 'income-transaction-report', externalReport: true },
+      ]
+    },
+    {
       label: 'Expenses',
       icon: TrendingDown,
       mainPath: 'expenses/form',
@@ -230,15 +240,15 @@ export default function Sidebar() {
         { title: 'Customer Lottery', icon: Trophy, path: 'customer-lottery' }
       ]
     },
-    // {
-    //   label: 'NCM',
-    //   icon: BookCopy,
-    //   mainPath: 'ncm/statement',
-    //   items: [
-    //     { title: 'NCM Statement', icon: BookCopy, path: 'ncm/statement' },
-    //     { title: 'NCM Transactions', icon: BookCopy, path: 'ncm-transactions' }
-    //   ]
-    // },
+    {
+      label: 'NCM',
+      icon: BookCopy,
+      mainPath: 'ncm/statement',
+      items: [
+        { title: 'NCM Statement', icon: BookCopy, path: 'ncm/statement' },
+        { title: 'NCM Transactions', icon: BookCopy, path: 'ncm-transactions' }
+      ]
+    },
     {
       label: 'Transfer',
       icon: RefreshCw,

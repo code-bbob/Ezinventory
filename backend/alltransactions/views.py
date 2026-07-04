@@ -3,7 +3,7 @@ from datetime import timedelta
 from rest_framework.response import Response
 import random
 from decimal import Decimal
-from .serializers import PurchaseTransactionSerializer,PurchaseReturnSerializer,SalesTransactionSerializer,SalesReturnSerializer,VendorSerializer,VendorTransactionSerializer,EmployeeTransactionSerializer, ExpensesSerializer, WithdrawalSerializer, ClosingCashSerializer, CustomerSerializer
+from .serializers import PurchaseTransactionSerializer,PurchaseReturnSerializer,SalesTransactionSerializer,SalesReturnSerializer,VendorSerializer,VendorTransactionSerializer,EmployeeTransactionSerializer, ExpensesSerializer, WithdrawalSerializer, ClosingCashSerializer, CustomerSerializer, IncomeTransactionSerializer
 from enterprise.models import Branch
 from rest_framework.views import APIView
 from rest_framework import status
@@ -30,6 +30,7 @@ from enterprise.models import Employee
 from enterprise.serializers import EmployeeSerializer
 from django.db.models import IntegerField
 from django.db.models.functions import Cast
+from .models import IncomeTransaction
 
 
 # Create your views here.
@@ -2236,6 +2237,29 @@ class IncomeExpenseReportView(APIView):
                 total_esewa_income += order.esewa_remaining or 0
             total_income += order.remaining_received or 0
 
+        its = IncomeTransaction.objects.filter(enterprise=enterprise, date__range=(report_start_date, report_end_date))
+        if branch:
+            its = its.filter(branch=branch)
+
+        for it in its:
+            list1.append({
+                'id': it.id,
+                'bill_no': 'N/A',
+                'net_amount': it.amount,
+                'description': f"Income Transaction: {it.desc}",
+                'method': it.method,
+                'date': it.date,
+                'type': 'Income Transaction',
+            })
+            if it.method == 'cash':
+                total_cash_income += it.amount
+            elif it.method == 'card':
+                total_card_income += it.amount 
+            elif it.method == 'fonepay':
+                total_fonepay_income += it.amount
+            elif it.method == 'esewa':
+                total_esewa_income += it.amount
+
         dts = DebtorTransaction.objects.filter(enterprise=enterprise, date__range=(report_start_date, report_end_date))
         if branch:
             dts = dts.filter(branch=branch)
@@ -2549,3 +2573,159 @@ class NCMReport(APIView):
         ncmts = NCMTransactionSerializer(ncm_transactions, many=True).data
         return Response({'ncm_data': ncm_data, 'ncm_transactions': ncmts})
     
+
+class IncomeTransactionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, branch=None, pk=None):
+        enterprise = request.user.employee.enterprise
+
+        # Single fetch
+        if pk is not None:
+            income_transaction = IncomeTransaction.objects.filter(id=pk, enterprise=enterprise).first()
+            if not income_transaction:
+                return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+            serializer = IncomeTransactionSerializer(income_transaction)
+            return Response(serializer.data)
+
+        income_transactions = IncomeTransaction.objects.filter(enterprise=enterprise)
+
+        if branch:
+            income_transactions = income_transactions.filter(branch=branch)
+
+        search = request.GET.get('search')
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+
+        if search:
+            income_transactions = income_transactions.filter(
+                Q(income_type__icontains=search) | Q(desc__icontains=search) | Q(method__icontains=search)
+            )
+
+        if start_date and end_date:
+            sd = parse_date(start_date)
+            ed = parse_date(end_date)
+            if sd and ed:
+                income_transactions = income_transactions.filter(date__range=(sd, ed))
+        elif start_date and not end_date:
+            sd = parse_date(start_date)
+            if sd:
+                income_transactions = income_transactions.filter(date__gte=sd)
+        elif end_date and not start_date:
+            ed = parse_date(end_date)
+            if ed:
+                income_transactions = income_transactions.filter(date__lte=ed)
+
+        income_transactions = income_transactions.order_by('-date', '-id')
+
+        paginator = PageNumberPagination()
+        paginator.page_size = 5
+        paginated_transactions = paginator.paginate_queryset(income_transactions, request)
+
+        serializer = IncomeTransactionSerializer(paginated_transactions, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+    def post(self, request):
+        data = request.data
+        enterprise = request.user.employee.enterprise
+        data['enterprise'] = enterprise.id
+        serializer = IncomeTransactionSerializer(data=data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request, pk):
+        enterprise = request.user.employee.enterprise
+        role = request.user.employee.role
+        if role != "Admin":
+            return Response("Unauthorized", status=status.HTTP_403_FORBIDDEN)
+        income_transaction = IncomeTransaction.objects.filter(id=pk, enterprise=enterprise).first()
+        if not income_transaction:
+            return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+        serializer = IncomeTransactionSerializer(income_transaction, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        enterprise = request.user.employee.enterprise
+        role = request.user.employee.role
+        if role != "Admin":
+            return Response("Unauthorized", status=status.HTTP_403_FORBIDDEN)
+        income_transaction = IncomeTransaction.objects.filter(id=pk, enterprise=enterprise).first()
+        if not income_transaction:
+            return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+        income_transaction.delete()
+        return Response("Deleted", status=status.HTTP_204_NO_CONTENT)
+
+
+class IncomeTransactionReportView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, branch=None):
+        """Return income transaction rows plus a summary object (last element)."""
+        enterprise = request.user.employee.enterprise
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+        search = request.GET.get('search')
+
+        income_transactions = IncomeTransaction.objects.filter(enterprise=enterprise)
+        if branch:
+            income_transactions = income_transactions.filter(branch=branch)
+
+        # Apply search filter
+        if search:
+            income_transactions = income_transactions.filter(
+                Q(income_type__icontains=search) | Q(desc__icontains=search) | Q(method__icontains=search)
+            )
+
+        # Apply date filters
+        if start_date and end_date:
+            sd = parse_date(start_date)
+            ed = parse_date(end_date)
+            if sd and ed:
+                income_transactions = income_transactions.filter(date__range=(sd, ed))
+        elif start_date and not end_date:
+            sd = parse_date(start_date)
+            if sd:
+                income_transactions = income_transactions.filter(date__gte=sd)
+        elif end_date and not start_date:
+            ed = parse_date(end_date)
+            if ed:
+                income_transactions = income_transactions.filter(date__lte=ed)
+
+        # Default to today's income when no filters/search provided
+        if not search and not start_date and not end_date:
+            income_transactions = income_transactions.filter(date=timezone.now().date())
+
+        income_transactions = income_transactions.order_by('date', 'id')
+
+        count = income_transactions.count()
+        total_income = 0
+
+        rows = []
+        method_totals = {}
+        for inc in income_transactions:
+            amt = inc.amount or 0
+            total_income += amt
+            method = inc.method or 'cash'
+            method_totals[method] = method_totals.get(method, 0) + amt
+
+            rows.append({
+                'id': inc.id,
+                'date': inc.date,
+                'income_type': inc.income_type,
+                'method': inc.method,
+                'amount': amt,
+                'desc': inc.desc,
+            })
+
+        rows.append({
+            'count': count,
+            'total_income': total_income,
+            'method_totals': method_totals,
+        })
+
+        return Response(rows)

@@ -78,4 +78,10 @@ urlpatterns = [
     path('ncmtransaction/', views.NCMTransactionView.as_view(), name='ncmtransaction'),
     path('ncmtransaction/branch/<int:branch>/', views.NCMTransactionView.as_view(), name='ncmtransaction'),
     path('ncmtransaction/<int:pk>/', views.NCMTransactionView.as_view(), name='ncmtransaction'),
+
+    path('income-transaction/', views.IncomeTransactionView.as_view(), name='income_transaction'),
+    path('income-transaction/branch/<int:branch>/', views.IncomeTransactionView.as_view(), name='income_transaction_branch'),
+    path('income-transaction/<int:pk>/', views.IncomeTransactionView.as_view(), name='income_transaction_detail'),
+    path('income-transaction-report/', views.IncomeTransactionReportView.as_view(), name='income_transaction_report'),
+    path('income-transaction-report/branch/<int:branch>/', views.IncomeTransactionReportView.as_view(), name='income_transaction_report_branch'),
 ]

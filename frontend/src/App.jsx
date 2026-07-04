@@ -59,6 +59,10 @@ import AllNCMTransactions from "@/pages/allNCMTransactions";
 import NCMTransactionForm from "@/pages/ncmTransactionForm";
 import EditNCMTransactionForm from "@/pages/editNCMTransactionForm";
 import TransferForm from "./components/transferForm";
+import AllIncomeTransactionPage from "@/pages/allIncomeTransaction";
+import AllIncomeTransactionForm from "./components/allIncomeTransactionForm";
+import EditAllIncomeTransaction from "./components/editAllIncomeTransaction";
+import AllIncomeTransactionReport from "@/pages/allIncomeTransactionReport";
 import OrderForm from "./components/orderForm";
 import EditOrderForm from "./components/editOrderForm";
 import OrderDetail from "./components/orderDetail";
@@ -169,6 +173,11 @@ function App() {
           <Route path="expenses/form/branch/:branchId" element={<AllExpenseForm />} />
           <Route path="expenses/branch/:branchId/edit/:expenseId" element={<EditAllExpense />} />
           <Route path="expenses-report/branch/:branchId" element={<AllExpensesReport />} />
+          {/* Income Transactions */}
+          <Route path="income-transaction/branch/:branchId" element={<AllIncomeTransactionPage />} />
+          <Route path="income-transaction/form/branch/:branchId" element={<AllIncomeTransactionForm />} />
+          <Route path="income-transaction/branch/:branchId/edit/:incomeTransactionId" element={<EditAllIncomeTransaction />} />
+          <Route path="income-transaction-report/branch/:branchId" element={<AllIncomeTransactionReport />} />
           {/* Withdrawals */}
           <Route path="withdrawals/branch/:branchId" element={<AllWithdrawalsPage />} />
           <Route path="withdrawals/form/branch/:branchId" element={<AllWithdrawalForm />} />

@@ -344,3 +344,15 @@ class NCMTransaction(models.Model):
             self.ncm.due = self.ncm.due - self.amount if self.ncm.due is not None else -self.amount
             self.ncm.save() 
         super().delete(*args, **kwargs)
+
+class IncomeTransaction(models.Model):
+    date = models.DateField()
+    income_type = models.CharField(max_length=50)
+    amount = models.FloatField()
+    method = models.CharField(max_length=20, choices=(('cash','Cash'),('card','Card'),('fonepay','Fonepay'),('esewa','Esewa')), default='cash')
+    desc = models.CharField(max_length=100, null=True, blank=True)
+    enterprise = models.ForeignKey(Enterprise, on_delete=models.CASCADE, related_name="income_transaction")
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE, null=True, blank=True, related_name="income_transaction")
+
+    def __str__(self):
+        return f"{self.income_type} for Rs. {self.amount}"
