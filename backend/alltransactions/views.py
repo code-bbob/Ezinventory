@@ -24,8 +24,8 @@ from .serializers import DebtorSerializer, DebtorTransactionSerializer
 import json
 from alltransactions.models import EmployeeTransactionDetail,Withdrawal, ClosingCash
 from order.models import Order
-from .models import NCM, NCMTransaction
-from .serializers import NCMSerializer, NCMTransactionSerializer
+from .models import NCM, NCMTransaction, NCMReturn
+from .serializers import NCMSerializer, NCMTransactionSerializer, NCMReturnSerializer
 from enterprise.models import Employee
 from enterprise.serializers import EmployeeSerializer
 from django.db.models import IntegerField
@@ -831,7 +831,7 @@ class SalesReportView(APIView):
         if search:
             sales = sales.filter(product__brand__name__icontains = search)
         
-        sales = sales.order_by('sales_transaction__date','sales_transaction__method','id') 
+        # sales = sales.order_by('sales_transaction__date','sales_transaction__method','id') 
         if not search and not start_date and not end_date:
             sales = sales.filter(sales_transaction__date = timezone.now().date())
 
@@ -2337,20 +2337,20 @@ class IncomeExpenseReportView(APIView):
             })
             total_withdrawal += wd.amount or 0
         
-        sort_order = {
-            "cash" : 1,
-            "card" : 2,
-            "esewa" : 3,
-            "fonepay" : 4,
-            "mixed" : 5,
-            "credit" : 6,
-            "N/A" : 7,
-        }
+        # sort_order = {
+        #     "cash" : 1,
+        #     "card" : 2,
+        #     "esewa" : 3,
+        #     "fonepay" : 4,
+        #     "mixed" : 5,
+        #     "credit" : 6,
+        #     "N/A" : 7,
+        # }
         net_cash_in_hand = (closing_cash.amount if closing_cash else 0) + total_cash_income - total_cash_expense - total_withdrawal
-        list1.sort(key=lambda x: (
-            x["date"],              # 1st: date (ascending)
-            sort_order[x["method"]]        # 2nd: type priority
-        ))
+        # list1.sort(key=lambda x: (
+        #     x["date"],              # 1st: date (ascending)
+        #     sort_order[x["method"]]        # 2nd: type priority
+        # ))
 
         report = {
             'transactions' : list1,
@@ -2659,6 +2659,39 @@ class IncomeTransactionView(APIView):
             return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
         income_transaction.delete()
         return Response("Deleted", status=status.HTTP_204_NO_CONTENT)
+
+
+class NCMReturnView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, branch=None):
+        enterprise = request.user.employee.enterprise
+        ncm_returns = NCMReturn.objects.filter(enterprise=enterprise)
+
+        if branch:
+            ncm_returns = ncm_returns.filter(branch=branch)
+
+        ncm_returns = ncm_returns.order_by('-id')
+
+        paginator = PageNumberPagination()
+        paginator.page_size = 5
+        paginated_data = paginator.paginate_queryset(ncm_returns, request)
+
+        serializer = NCMReturnSerializer(paginated_data, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+    def post(self, request):
+        data = request.data
+        user = request.user
+        enterprise = user.employee.enterprise
+        data['enterprise'] = enterprise.id
+        if hasattr(user.employee, 'branch') and user.employee.branch:
+            data['branch'] = user.employee.branch.id
+        serializer = NCMReturnSerializer(data=data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class IncomeTransactionReportView(APIView):
