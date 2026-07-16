@@ -2661,37 +2661,37 @@ class IncomeTransactionView(APIView):
         return Response("Deleted", status=status.HTTP_204_NO_CONTENT)
 
 
-class NCMReturnView(APIView):
-    permission_classes = [IsAuthenticated]
+# class NCMReturnView(APIView):
+#     permission_classes = [IsAuthenticated]
 
-    def get(self, request, branch=None):
-        enterprise = request.user.employee.enterprise
-        ncm_returns = NCMReturn.objects.filter(enterprise=enterprise)
+#     def get(self, request, branch=None):
+#         enterprise = request.user.employee.enterprise
+#         ncm_returns = NCMReturn.objects.filter(enterprise=enterprise)
 
-        if branch:
-            ncm_returns = ncm_returns.filter(branch=branch)
+#         if branch:
+#             ncm_returns = ncm_returns.filter(branch=branch)
 
-        ncm_returns = ncm_returns.order_by('-id')
+#         ncm_returns = ncm_returns.order_by('-id')
 
-        paginator = PageNumberPagination()
-        paginator.page_size = 5
-        paginated_data = paginator.paginate_queryset(ncm_returns, request)
+#         paginator = PageNumberPagination()
+#         paginator.page_size = 5
+#         paginated_data = paginator.paginate_queryset(ncm_returns, request)
 
-        serializer = NCMReturnSerializer(paginated_data, many=True)
-        return paginator.get_paginated_response(serializer.data)
+#         serializer = NCMReturnSerializer(paginated_data, many=True)
+#         return paginator.get_paginated_response(serializer.data)
 
-    def post(self, request):
-        data = request.data
-        user = request.user
-        enterprise = user.employee.enterprise
-        data['enterprise'] = enterprise.id
-        if hasattr(user.employee, 'branch') and user.employee.branch:
-            data['branch'] = user.employee.branch.id
-        serializer = NCMReturnSerializer(data=data)
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#     def post(self, request):
+#         data = request.data
+#         user = request.user
+#         enterprise = user.employee.enterprise
+#         data['enterprise'] = enterprise.id
+#         if hasattr(user.employee, 'branch') and user.employee.branch:
+#             data['branch'] = user.employee.branch.id
+#         serializer = NCMReturnSerializer(data=data)
+#         if serializer.is_valid(raise_exception=True):
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class IncomeTransactionReportView(APIView):
