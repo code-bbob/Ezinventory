@@ -24,8 +24,8 @@ from .serializers import DebtorSerializer, DebtorTransactionSerializer
 import json
 from alltransactions.models import EmployeeTransactionDetail,Withdrawal, ClosingCash
 from order.models import Order
-from .models import NCM, NCMTransaction, NCMReturn
-from .serializers import NCMSerializer, NCMTransactionSerializer, NCMReturnSerializer
+from .models import NCM, NCMTransaction
+from .serializers import NCMSerializer, NCMTransactionSerializer
 from enterprise.models import Employee
 from enterprise.serializers import EmployeeSerializer
 from django.db.models import IntegerField
