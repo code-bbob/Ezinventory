@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Container, Search, ArrowLeft, Trash2, Plus, List } from "lucide-react";
+import { Container, Search, ArrowLeft, Trash2, Plus, List, Download } from "lucide-react";
 import useAxios from "@/utils/useAxios";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,8 @@ import { Label } from "@/components/ui/label";
 
 import Select from "react-select";
 import clsx from "clsx";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 export default function AllBrandProducts() {
   const api = useAxios();
@@ -259,6 +261,35 @@ export default function AllBrandProducts() {
   const handleEdit = (p) =>
     navigate(`/inventory/branch/${p.branch}/editproduct/${p.id}`);
 
+  const handleDownloadProductsCSV = () => {
+    if (!products.length) return;
+    const escapeCSV = (val) => `"${String(val ?? "").replace(/"/g, '""')}"`;
+    let csv = "Product,Count,Unit Price,Stock\n";
+    products.forEach((p) => {
+      csv += `${escapeCSV(p.name)},${p.count},${p.selling_price},${p.stock}\n`;
+    });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `${brandName || "Brand"}_Products.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleDownloadProductsPDF = () => {
+    if (!products.length) return;
+    const doc = new jsPDF();
+    doc.text(`${brandName || "Brand"} Products`, 14, 10);
+    doc.autoTable({
+      head: [["Product", "Count", "Unit Price", "Stock"]],
+      body: products.map((p) => [p.name, p.count, p.selling_price, p.stock]),
+      startY: 20,
+    });
+    doc.save(`${brandName || "Brand"}_Products.pdf`);
+  };
+
   // const handlePrintBarcode = () => {
   //   const w = window.open();
   //   w.document.write(`
@@ -431,6 +462,25 @@ filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete Selected
               </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full sm:w-auto px-5 text-black border-white hover:bg-gray-700 hover:text-white"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Download
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56">
+                  <DropdownMenuItem onClick={handleDownloadProductsPDF}>
+                    Download as PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleDownloadProductsCSV}>
+                    Download as CSV
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <div className="hidden md:block">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

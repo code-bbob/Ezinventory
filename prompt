@@ -1,0 +1,33 @@
+Make 2 seperate buttons on the editallsalespage
+One should say Exchange and one should say return instead of just one return
+
+When clicked on exchage keep the current flow, i.e redirect it to the sales exchange page
+
+when clicked on return, just post the return and return to allsalespage
+
+
+
+
+
+
+
+rn, is_sale_exchange ta new sale ma po pardo raixa, 
+
+what needs to be done is 
+
+exchanged, fields set garam
+
+if exchanged then no expense amount set
+
+if not then post a new expense amount 
+
+
+
+then comes, ncm
+
+if returned:
+    arko ncm transaction post with total amount reveived , returned vanera which is equivalent to amount received 
+
+
+
+Return Selected ra Return all 

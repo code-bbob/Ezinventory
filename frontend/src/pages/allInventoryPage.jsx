@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Search, ArrowLeft, Trash2, List, Smartphone } from 'lucide-react'
 import useAxios from '@/utils/useAxios'
 import Sidebar from '@/components/allsidebar'
+import jsPDF from "jspdf"
+import "jspdf-autotable"
 import {
   Dialog,
   DialogContent,
@@ -112,6 +114,91 @@ export function AllInventoryPageComponent() {
     setIsBranchDialogOpen(true)
   }
 
+  const escapeCSV = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`
+
+  const downloadCSV = (content, filename) => {
+    const blob = new Blob([content], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.setAttribute("download", filename)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const handleDownloadAllBrands = async () => {
+    try {
+      const response = await api.get(`allinventory/brand/`)
+      const allBrands = response.data
+      if (!allBrands.length) return
+      let csv = "Brand,Count,Stock\n"
+      allBrands.forEach(b => {
+        csv += `${escapeCSV(b.name)},${b.count},${b.stock}\n`
+      })
+      downloadCSV(csv, "All_Brands.csv")
+    } catch (err) {
+      console.error("Error downloading brands:", err)
+    }
+  }
+
+  const handleDownloadAllProducts = async () => {
+    try {
+      const response = await api.get(`allinventory/product/`)
+      const allProducts = response.data
+      if (!allProducts.length) return
+      const sorted = [...allProducts].sort((a, b) =>
+        (a.brandName || '').localeCompare(b.brandName || '') || a.name.localeCompare(b.name)
+      )
+      let csv = "Brand,Product,Count,Unit Price,Stock\n"
+      sorted.forEach(p => {
+        csv += `${escapeCSV(p.brandName)},${escapeCSV(p.name)},${p.count},${p.selling_price},${p.stock}\n`
+      })
+      downloadCSV(csv, "All_Products.csv")
+    } catch (err) {
+      console.error("Error downloading products:", err)
+    }
+  }
+
+  const handleDownloadAllBrandsPDF = async () => {
+    try {
+      const response = await api.get(`allinventory/brand/`)
+      const allBrands = response.data
+      if (!allBrands.length) return
+      const doc = new jsPDF()
+      doc.text("All Brands", 14, 10)
+      doc.autoTable({
+        head: [["Brand", "Count", "Stock"]],
+        body: allBrands.map(b => [b.name, b.count, b.stock]),
+        startY: 20,
+      })
+      doc.save("All_Brands.pdf")
+    } catch (err) {
+      console.error("Error downloading brands PDF:", err)
+    }
+  }
+
+  const handleDownloadAllProductsPDF = async () => {
+    try {
+      const response = await api.get(`allinventory/product/`)
+      const allProducts = response.data
+      if (!allProducts.length) return
+      const sorted = [...allProducts].sort((a, b) =>
+        (a.brandName || '').localeCompare(b.brandName || '') || a.name.localeCompare(b.name)
+      )
+      const doc = new jsPDF()
+      doc.text("All Products", 14, 10)
+      doc.autoTable({
+        head: [["Brand", "Product", "Count", "Unit Price", "Stock"]],
+        body: sorted.map(p => [p.brandName, p.name, p.count, p.selling_price, p.stock]),
+        startY: 20,
+      })
+      doc.save("All_Products.pdf")
+    } catch (err) {
+      console.error("Error downloading products PDF:", err)
+    }
+  }
+
   if (loading) return (
     <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-white">
       Loading...
@@ -152,6 +239,32 @@ export function AllInventoryPageComponent() {
                 <List className="h-6 w-6 text-white cursor-pointer" />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56">
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>Download</DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent className="w-56">
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>Download as PDF</DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                          <DropdownMenuSubContent>
+                            <DropdownMenuItem onClick={handleDownloadAllProductsPDF}>Products</DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleDownloadAllBrandsPDF}>Brands</DropdownMenuItem>
+                          </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                      </DropdownMenuSub>
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>Download as CSV</DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                          <DropdownMenuSubContent>
+                            <DropdownMenuItem onClick={handleDownloadAllProducts}>Products</DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleDownloadAllBrands}>Brands</DropdownMenuItem>
+                          </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                      </DropdownMenuSub>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+                <DropdownMenuSeparator />
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>Import From Branch</DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
@@ -205,6 +318,32 @@ export function AllInventoryPageComponent() {
                 <List className="h-6 w-6 text-white cursor-pointer" />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56">
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>Download</DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent className="w-56">
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>Download as PDF</DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                          <DropdownMenuSubContent>
+                            <DropdownMenuItem onClick={handleDownloadAllProductsPDF}>Products</DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleDownloadAllBrandsPDF}>Brands</DropdownMenuItem>
+                          </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                      </DropdownMenuSub>
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>Download as CSV</DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                          <DropdownMenuSubContent>
+                            <DropdownMenuItem onClick={handleDownloadAllProducts}>Products</DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleDownloadAllBrands}>Brands</DropdownMenuItem>
+                          </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                      </DropdownMenuSub>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+                <DropdownMenuSeparator />
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>Import From Branch</DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
