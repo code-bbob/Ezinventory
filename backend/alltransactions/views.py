@@ -276,6 +276,7 @@ class SalesTransactionView(APIView):
             
             transactions = SalesTransaction.objects.filter(
                 date__range=(start_date, end_date),
+                branch=branch,
                 hidden=False
             )
 

@@ -117,9 +117,24 @@ const Invoice = ({ transactionId }) => {
   if (error)        return <div style={{ padding: "2rem", color: "red" }}>{error}</div>
   if (!invoiceData) return null
 
-  const hasItemDiscount = invoiceData.sales?.some(item => parseFloat(item.discount) > 0)
+  const items = invoiceData.sales || []
+  const hasItemDiscount = items.some(item => parseFloat(item.discount) > 0)
+
+  // Pre-discount subtotal (use stored value, else sum the item line totals)
+  const subtotal =
+    invoiceData.subtotal != null
+      ? parseFloat(invoiceData.subtotal)
+      : items.reduce(
+          (sum, item) =>
+            sum + parseFloat(item.total_price ?? (item.unit_price * (item.quantity || 1))),
+          0
+        )
+
+  // Discount = transaction-level discount (regular sales) + per-item discounts (all sales)
   const transactionDiscount = parseFloat(invoiceData.discount) || 0
-  const hasDiscount = transactionDiscount > 0
+  const itemDiscount = items.reduce((sum, item) => sum + (parseFloat(item.discount) || 0), 0)
+  const discount = transactionDiscount + itemDiscount
+  const hasDiscount = discount > 0
 
   return (
     <>
@@ -194,21 +209,20 @@ const Invoice = ({ transactionId }) => {
 
         <Dash />
 
+        <TotalRow style={{ fontWeight: "normal", fontSize: 11 }}>
+          <span>Subtotal:</span>
+          <span>{subtotal.toFixed(2)}</span>
+        </TotalRow>
+
         {hasDiscount && (
-          <>
-            <TotalRow style={{ fontWeight: "normal", fontSize: 11 }}>
-              <span>Subtotal:</span>
-              <span>{(parseFloat(invoiceData.total_amount) + transactionDiscount).toFixed(2)}</span>
-            </TotalRow>
-            <TotalRow style={{ fontWeight: "normal", fontSize: 11, color: "#555" }}>
-              <span>Discount:</span>
-              <span>-{transactionDiscount}</span>
-            </TotalRow>
-          </>
+          <TotalRow style={{ fontWeight: "normal", fontSize: 11, color: "#555" }}>
+            <span>Discount:</span>
+            <span>-{discount.toFixed(2)}</span>
+          </TotalRow>
         )}
 
         <TotalRow>
-          <span>Total Amount:</span>
+          <span>Net Total:</span>
           <span>{invoiceData.total_amount}</span>
         </TotalRow>
 
