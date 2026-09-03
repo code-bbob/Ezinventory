@@ -1009,7 +1009,7 @@ class SalesReturnSerializer(serializers.ModelSerializer):
                 'branch': sales_return.branch,
                 'enterprise': sales_return.enterprise,
                 'type': 'return',
-                'bill_no': sales_return.sales_transaction.bill_no
+                # 'bill_no': sales_return.sales_transaction.bill_no
             })
         else:
             # Expenses.objects.create(
