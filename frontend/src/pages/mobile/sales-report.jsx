@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Printer, Download, ChevronDown, Search, Calendar, ArrowLeft } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import useAxios from "@/utils/useAxios"
 import { useNavigate } from "react-router-dom"
 import { useParams } from "react-router-dom"
@@ -25,6 +26,8 @@ const SalesReport = () => {
   const [endDate, setEndDate] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
   const [searchPhone, setSearchPhone] = useState("")
+  const [selectedEmployee, setSelectedEmployee] = useState("all")
+  const [employees, setEmployees] = useState([])
   const api = useAxios()
   const navigate = useNavigate()
   const {branchId} = useParams()
@@ -32,7 +35,17 @@ const SalesReport = () => {
 
   useEffect(() => {
     fetchSalesData()
+    fetchEmployees()
   }, [])
+
+  const fetchEmployees = async () => {
+    try {
+      const response = await api.get(`enterprise/employeebranch/${branchId}/`)
+      setEmployees(Array.isArray(response.data) ? response.data : [])
+    } catch (err) {
+      setEmployees([])
+    }
+  }
 
   const fetchSalesData = async (params = {}) => {
     setLoading(true)
@@ -56,6 +69,7 @@ const SalesReport = () => {
     e.preventDefault()
     const params = { search: searchTerm }
     if (searchPhone) params.phone = searchPhone
+    if (selectedEmployee && selectedEmployee !== "all") params.employee = selectedEmployee
     if (startDate) params.start_date = startDate
     if (endDate) params.end_date = endDate
     fetchSalesData(params)
@@ -66,6 +80,18 @@ const SalesReport = () => {
     const params = { start_date: startDate, end_date: endDate }
     if (searchTerm) params.search = searchTerm
     if (searchPhone) params.phone = searchPhone
+    if (selectedEmployee && selectedEmployee !== "all") params.employee = selectedEmployee
+    fetchSalesData(params)
+  }
+
+  const handleEmployeeChange = (value) => {
+    setSelectedEmployee(value)
+    const params = {}
+    if (value && value !== "all") params.employee = value
+    if (searchTerm) params.search = searchTerm
+    if (searchPhone) params.phone = searchPhone
+    if (startDate) params.start_date = startDate
+    if (endDate) params.end_date = endDate
     fetchSalesData(params)
   }
 
@@ -78,15 +104,15 @@ const SalesReport = () => {
       return
     }
   
-    // Create CSV header
+// Create CSV header
     let csvContent = isAdmin
-      ? "Date,Phone,Brand,IMEI,Unit Price,Profit,Method\n"
-      : "Date,Phone,Brand,IMEI,Unit Price,Method\n"
-  
+      ? "Date,Phone,Brand,IMEI,Unit Price,Profit,Posted By,Method\n"
+      : "Date,Phone,Brand,IMEI,Unit Price,Posted By,Method\n"
+
     // Convert each sale into a CSV row
     data.sales.forEach((item) => {
       const common = `${item.date},${item.phone},${item.brand},${item.imei_number},${item.unit_price}`
-      const row = isAdmin ? `${common},${item.profit},${item.method}` : `${common},${item.method}`
+      const row = isAdmin ? `${common},${item.profit},${item.employee_name || ""},${item.method}` : `${common},${item.employee_name || ""},${item.method}`
       csvContent += row + "\n"
     })
   
@@ -113,6 +139,7 @@ const SalesReport = () => {
     e.preventDefault()
     const params = { phone: searchPhone }
   if (searchTerm) params.search = searchTerm
+    if (selectedEmployee && selectedEmployee !== "all") params.employee = selectedEmployee
     if (startDate) params.start_date = startDate
     if (endDate) params.end_date = endDate
     fetchSalesData(params)
@@ -128,19 +155,19 @@ const SalesReport = () => {
     doc.text("Sales Report", 14, 10)
   
     // Table Headers
-    const headers = [
+const headers = [
       isAdmin
-        ? ["Date", "Phone", "Brand", "IMEI", "Unit Price", "Profit", "Method"]
-        : ["Date", "Phone", "Brand", "IMEI", "Unit Price", "Method"]
+        ? ["Date", "Phone", "Brand", "IMEI", "Unit Price", "Profit", "Posted By", "Method"]
+        : ["Date", "Phone", "Brand", "IMEI", "Unit Price", "Posted By", "Method"]
     ]
-  
+
     // Table Data
     const tableData = data.sales.map((item) => (
       isAdmin
-        ? [item.date, item.phone, item.brand, item.imei_number, item.unit_price, item.profit, item.method]
-        : [item.date, item.phone, item.brand, item.imei_number, item.unit_price, item.method]
+        ? [item.date, item.phone, item.brand, item.imei_number, item.unit_price, item.profit, item.employee_name || "", item.method]
+        : [item.date, item.phone, item.brand, item.imei_number, item.unit_price, item.employee_name || "", item.method]
     ))
-  
+
     // Add Summary Row
     tableData.push(["", "", "", "Subtotal Sales", data.subtotal_sales])
     tableData.push(["", "", "", "Total Discount", data.total_discount])
@@ -217,6 +244,20 @@ const SalesReport = () => {
               </div>
             </form>
 
+            <div className="w-full lg:w-auto">
+              <Select value={selectedEmployee} onValueChange={handleEmployeeChange}>
+                <SelectTrigger className="w-full lg:w-52 bg-slate-700 text-white border-gray-600 focus:border-purple-500 focus:ring-purple-500">
+                  <SelectValue placeholder="Filter by employee" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectItem value="all" className="text-white">All Employees</SelectItem>
+                  {employees.map((emp) => (
+                    <SelectItem key={emp.id} value={emp.id.toString()} className="text-white">{emp.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <form onSubmit={handleDateSearch} className="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4">
               <div className="flex items-center space-x-2">
                 <Label htmlFor="startDate" className="text-white whitespace-nowrap">
@@ -277,6 +318,7 @@ const SalesReport = () => {
                 <TableHead className="text-white print:text-black">Brand</TableHead>
                 <TableHead className="text-white print:text-black">IMEI</TableHead>
                 <TableHead className="text-white print:text-black">Method</TableHead>
+                <TableHead className="text-white print:text-black">Posted By</TableHead>
                 <TableHead className="text-right text-white print:text-black">Unit Price</TableHead>
                 {isAdmin && (
                   <TableHead className="text-right text-white print:text-black">Profit</TableHead>
@@ -291,6 +333,7 @@ const SalesReport = () => {
                   <TableCell className="text-white print:text-black">{item.brand}</TableCell>
                   <TableCell className="text-white print:text-black">{item.imei_number}</TableCell>
                   <TableCell className="text-white print:text-black">{item.method}</TableCell>
+                  <TableCell className="text-white print:text-black">{item.employee_name || '—'}</TableCell>
                   <TableCell className="text-right text-white print:text-black">
                     {item.unit_price.toLocaleString("en-US", { style: "currency", currency: "NPR" })}
                   </TableCell>

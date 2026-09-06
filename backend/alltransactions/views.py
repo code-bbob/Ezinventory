@@ -809,11 +809,15 @@ class SalesReportView(APIView):
         start_date = request.GET.get('start_date')
         end_date = request.GET.get('end_date')
         product = request.GET.get('product')
+        employee = request.GET.get('employee')
 
         sales = Sales.objects.filter(sales_transaction__enterprise = request.user.employee.enterprise, returned = False, sales_transaction__hidden = False)
         if branch:
             sales = sales.filter(sales_transaction__branch = branch)
         
+        if employee:
+            sales = sales.filter(sales_transaction__employee_id = employee)
+
         if product:
             sales = sales.filter(product__name__startswith = product)
 
@@ -833,7 +837,7 @@ class SalesReportView(APIView):
             sales = sales.filter(product__brand__name__icontains = search)
         
         # sales = sales.order_by('sales_transaction__date','sales_transaction__method','id') 
-        if not search and not start_date and not end_date:
+        if not search and not start_date and not end_date and not employee:
             sales = sales.filter(sales_transaction__date = timezone.now().date())
 
         count = sales.count()
@@ -872,6 +876,7 @@ class SalesReportView(APIView):
                 "line_subtotal": line_subtotal,
                 "discount": line_discount,
                 "total_price": line_net,
+                "employee_name": sale.sales_transaction.employee.user.name if sale.sales_transaction.employee and sale.sales_transaction.employee.user else (sale.sales_transaction.employee.name if sale.sales_transaction.employee else None),
                 "method": sale.sales_transaction.method,
                 "transaction_id": sale.sales_transaction.id
             })

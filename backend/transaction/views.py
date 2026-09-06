@@ -1305,10 +1305,13 @@ class SalesReportView(APIView):
         start_date = request.GET.get('start_date')
         end_date = request.GET.get('end_date')
         phone = request.GET.get('phone')
+        employee = request.GET.get('employee')
 
         sales = Sales.objects.filter(sales_transaction__enterprise = request.user.employee.enterprise,returned = False)
         if branch:
             sales = sales.filter(sales_transaction__branch = branch)
+        if employee:
+            sales = sales.filter(sales_transaction__employee_id = employee)
         if search:
             # first_date_of_month = timezone.now().date().replace(day=1)
             # today = timezone.now().date()
@@ -1330,7 +1333,7 @@ class SalesReportView(APIView):
             sales = sales.filter(sales_transaction__date__lte=end_date)
 
         
-        if not search and not start_date and not end_date:
+        if not search and not start_date and not end_date and not employee:
             sales = sales.filter(sales_transaction__date = timezone.now().date())
 
         count = sales.count()
@@ -1357,6 +1360,7 @@ class SalesReportView(APIView):
                 "imei_number": sale.imei_number,
                 "unit_price": sale.unit_price,
                 "profit": profit,
+                "employee_name": sale.sales_transaction.employee.user.name if sale.sales_transaction.employee and sale.sales_transaction.employee.user else (sale.sales_transaction.employee.name if sale.sales_transaction.employee else None),
                 "method": sale.sales_transaction.method
             })
             if sale.sales_transaction.id not in sales_transaction:

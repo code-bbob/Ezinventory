@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Printer, Download, ChevronDown, Search, Calendar, ArrowLeft } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import useAxios from "@/utils/useAxios"
 import { useNavigate } from "react-router-dom"
 import jsPDF from "jspdf"
@@ -22,6 +23,8 @@ const AllSalesReport = () => {
   const [startDate, setStartDate] = useState("")
   const [endDate, setEndDate] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedEmployee, setSelectedEmployee] = useState("all")
+  const [employees, setEmployees] = useState([])
   const api = useAxios()
   const navigate = useNavigate()
   const methodColor = {
@@ -35,7 +38,17 @@ const AllSalesReport = () => {
 
   useEffect(() => {
     fetchSalesData()
+    fetchEmployees()
   }, [])
+
+  const fetchEmployees = async () => {
+    try {
+      const response = await api.get(`enterprise/employeebranch/${branchId}/`)
+      setEmployees(Array.isArray(response.data) ? response.data : [])
+    } catch (err) {
+      setEmployees([])
+    }
+  }
 
   const fetchSalesData = async (params = {}) => {
     setLoading(true)
@@ -57,6 +70,7 @@ const AllSalesReport = () => {
   const handleSearch = async (e) => {
     e.preventDefault()
     const params = { search: searchTerm }
+    if (selectedEmployee && selectedEmployee !== "all") params.employee = selectedEmployee
     if (startDate) params.start_date = startDate
     if (endDate) params.end_date = endDate
     fetchSalesData(params)
@@ -66,6 +80,17 @@ const AllSalesReport = () => {
     e.preventDefault()
     const params = { start_date: startDate, end_date: endDate }
     if (searchTerm) params.search = searchTerm
+    if (selectedEmployee && selectedEmployee !== "all") params.employee = selectedEmployee
+    fetchSalesData(params)
+  }
+
+  const handleEmployeeChange = (value) => {
+    setSelectedEmployee(value)
+    const params = {}
+    if (value && value !== "all") params.employee = value
+    if (searchTerm) params.search = searchTerm
+    if (startDate) params.start_date = startDate
+    if (endDate) params.end_date = endDate
     fetchSalesData(params)
   }
 
@@ -109,24 +134,25 @@ const AllSalesReport = () => {
     doc.text("Sales Report", 14, 10)
   
     // Table Headers
-  const headers = [["Date", "Product", "Qty", "Unit Price", "Subtotal", "Discount", "Net Total"]]
-  
+const headers = [["Date", "Product", "Posted By", "Qty", "Unit Price", "Subtotal", "Discount", "Net Total"]]
+
     // Table Data
     const tableData = (data.sales).map((item) => [
       item.date,
       item.product,
+      item.employee_name || "",
       item.quantity,
       item.unit_price,
       item.line_subtotal || (item.unit_price * item.quantity),
       item.discount || 0,
       item.total_price,
     ])
-  
+
     // Add Summary Row
-  tableData.push(["", "", "", "", "Subtotal Sales", data.subtotal_sales])
-  tableData.push(["", "", "", "", "Total Discount", data.total_discount])
-  tableData.push(["", "", "", "", "Net Sales", data.total_sales])
-  tableData.push(["", "", "", "", "Total Transactions", data.count])
+  tableData.push(["", "", "", "", "", "Subtotal Sales", data.subtotal_sales])
+  tableData.push(["", "", "", "", "", "Total Discount", data.total_discount])
+  tableData.push(["", "", "", "", "", "Net Sales", data.total_sales])
+  tableData.push(["", "", "", "", "", "Total Transactions", data.count])
   
     // Generate table
     doc.autoTable({
@@ -183,6 +209,20 @@ const AllSalesReport = () => {
                 />
               </div>
             </form>
+
+            <div className="w-full lg:w-auto">
+              <Select value={selectedEmployee} onValueChange={handleEmployeeChange}>
+                <SelectTrigger className="w-full lg:w-52 bg-slate-700 text-white border-gray-600 focus:border-purple-500 focus:ring-purple-500">
+                  <SelectValue placeholder="Filter by employee" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectItem value="all" className="text-white">All Employees</SelectItem>
+                  {employees.map((emp) => (
+                    <SelectItem key={emp.id} value={emp.id.toString()} className="text-white">{emp.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <form onSubmit={handleDateSearch} className="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4">
               <div className="flex items-center space-x-2">
@@ -243,6 +283,7 @@ const AllSalesReport = () => {
                 <TableHead className="w-[160px] text-white print:text-black">Product</TableHead>
                 <TableHead className="text-white print:text-black">Qty</TableHead>
                 <TableHead className="text-white print:text-black">Method</TableHead>
+                <TableHead className="text-white print:text-black">Posted By</TableHead>
                 <TableHead className="text-right text-white print:text-black">Bill No.</TableHead>
                 <TableHead className="text-right text-white print:text-black">Unit</TableHead>
                 <TableHead className="text-right text-white print:text-black">Subtotal</TableHead>
@@ -262,6 +303,7 @@ const AllSalesReport = () => {
                     <TableCell className="font-medium text-white print:text-black">{item.product}</TableCell>
                     <TableCell className="text-white print:text-black">{item.quantity}</TableCell>
                     <TableCell className={`print:text-black ${methodColor[item.method] ?? methodColor.default}`}>{item.method}</TableCell>
+                    <TableCell className="text-white print:text-black">{item.employee_name || '—'}</TableCell>
                     <TableCell className="text-right text-white print:text-black">{item.bill_no}</TableCell>
                     <TableCell className="text-right text-white print:text-black">{lineSubtotal && item.quantity ? (item.unit_price).toLocaleString("en-US", { style: "currency", currency: "NPR" }) : ''}</TableCell>
                     <TableCell className="text-right text-white print:text-black">{lineSubtotal.toLocaleString("en-US", { style: "currency", currency: "NPR" })}</TableCell>
