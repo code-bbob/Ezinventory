@@ -898,11 +898,10 @@ class SalesReportView(APIView):
 class PurchaseReportView(APIView):
     permission_classes = [IsAuthenticated]
 
-def get(self, request, branch=None):
-        enterprise = request.user.employee.enterprise
+    def get(self, request, branch=None):
+        search = request.GET.get('search')
         start_date = request.GET.get('start_date')
         end_date = request.GET.get('end_date')
-        employee = request.GET.get('employee')
         product = request.GET.get('product')
 
         purchases = Purchase.objects.filter(purchase_transaction__enterprise=request.user.employee.enterprise)
@@ -2115,6 +2114,7 @@ class IncomeExpenseReportView(APIView):
         enterprise = request.user.employee.enterprise
         start_date = request.GET.get('start_date')
         end_date = request.GET.get('end_date')
+        employee = request.GET.get('employee')
         total_cash_income = 0
         total_fonepay_income = 0
         total_esewa_income = 0
