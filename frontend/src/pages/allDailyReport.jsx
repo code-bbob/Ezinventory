@@ -36,6 +36,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import useAxios from "@/utils/useAxios";
 import { useNavigate, useParams } from "react-router-dom";
 import jsPDF from "jspdf";
@@ -52,6 +59,8 @@ const AllIncomeExpenseReport = () => {
   const [error, setError] = useState(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [selectedEmployee, setSelectedEmployee] = useState("all");
+  const [employees, setEmployees] = useState([]);
   const [message, setMessage] = useState("");
   const [role, setRole] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -70,9 +79,19 @@ const AllIncomeExpenseReport = () => {
 
   useEffect(() => {
     fetchIncomeExpenseData();
+    fetchEmployees();
     fetchRole();
     checkApprovalStatus();
   }, []);
+
+  const fetchEmployees = async () => {
+    try {
+      const response = await api.get(`enterprise/employeebranch/${branchId}/`);
+      setEmployees(Array.isArray(response.data) ? response.data : []);
+    } catch (e) {
+      setEmployees([]);
+    }
+  };
 
   const fetchRole = async () => {
     try {
@@ -142,6 +161,17 @@ const AllIncomeExpenseReport = () => {
     const params = {};
     if (startDate) params.start_date = startDate;
     if (endDate) params.end_date = endDate;
+    if (selectedEmployee && selectedEmployee !== "all")
+      params.employee = selectedEmployee;
+    fetchIncomeExpenseData(params);
+  };
+
+  const handleEmployeeChange = (value) => {
+    setSelectedEmployee(value);
+    const params = {};
+    if (value && value !== "all") params.employee = value;
+    if (startDate) params.start_date = startDate;
+    if (endDate) params.end_date = endDate;
     fetchIncomeExpenseData(params);
   };
 
@@ -181,9 +211,9 @@ const AllIncomeExpenseReport = () => {
 
   const handleDownloadCSV = () => {
     if (!data || !data.transactions.length) return;
-    let csv = "Date,Bill No,Type,Method,Description,Net Amount\n";
+    let csv = "Date,Bill No,Type,Method,Posted By,Description,Net Amount\n";
     data.transactions.forEach((t) => {
-      csv += `${t.date},${t.bill_no || ""},${t.type || ""},${t.method || ""},"${(t.description || "").replace(/\n/g, " ")}",${t.net_amount || 0}\n`;
+      csv += `${t.date},${t.bill_no || ""},${t.type || ""},${t.method || ""},${t.employee_name || ""},"${(t.description || "").replace(/\n/g, " ")}",${t.net_amount || 0}\n`;
     });
     csv += `\nCash Total,,${data.totals.cash}\nCheque Total,,${data.totals.cheque}\nTransfer Total,,${data.totals.transfer}\nNet Total,,${data.totals.net}\nNet Cash In Hand,,${data.net_cash_in_hand}\nCount,,${data.totals.count}\n`;
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -200,21 +230,22 @@ const AllIncomeExpenseReport = () => {
     if (!data || !data.transactions.length) return;
     const doc = new jsPDF();
     doc.text("Income-Expense Report", 14, 10);
-    const headers = [["Date", "Bill", "Type", "Method", "Description", "Net"]];
+    const headers = [["Date", "Bill", "Type", "Method", "Posted By", "Description", "Net"]];
     const body = data.transactions.map((t) => [
       t.date,
       t.bill_no || "",
       t.type || "",
       t.method || "",
+      t.employee_name || "",
       (t.description || "").replace(/\n/g, " "),
       t.net_amount || 0,
     ]);
-    body.push(["", "", "", "", "Cash Total", data.totals.cash]);
-    body.push(["", "", "", "", "Cheque Total", data.totals.cheque]);
-    body.push(["", "", "", "", "Transfer Total", data.totals.transfer]);
-    body.push(["", "", "", "", "Net Total", data.totals.net]);
-    body.push(["", "", "", "", "Net Cash In Hand", data.net_cash_in_hand]);
-    body.push(["", "", "", "", "Transactions", data.totals.count]);
+    body.push(["", "", "", "", "", "Cash Total", data.totals.cash]);
+    body.push(["", "", "", "", "", "Cheque Total", data.totals.cheque]);
+    body.push(["", "", "", "", "", "Transfer Total", data.totals.transfer]);
+    body.push(["", "", "", "", "", "Net Total", data.totals.net]);
+    body.push(["", "", "", "", "", "Net Cash In Hand", data.net_cash_in_hand]);
+    body.push(["", "", "", "", "", "Transactions", data.totals.count]);
     doc.autoTable({ head: headers, body, startY: 20 });
     doc.save("Income-Expense_Report.pdf");
   };
@@ -280,6 +311,30 @@ const AllIncomeExpenseReport = () => {
         </CardHeader>
         <CardContent className="pt-4 sm:pt-6">
           <div className="mb-6 space-y-3 sm:space-y-4 lg:space-y-0 lg:flex lg:flex-wrap lg:items-center lg:gap-4 print:hidden">
+            <div className="w-full lg:w-auto">
+              <Select
+                value={selectedEmployee}
+                onValueChange={handleEmployeeChange}
+              >
+                <SelectTrigger className="w-full lg:w-52 bg-slate-700 text-white border-gray-600 focus:border-purple-500 focus:ring-purple-500">
+                  <SelectValue placeholder="Filter by employee" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectItem value="all" className="text-white">
+                    All Employees
+                  </SelectItem>
+                  {employees.map((emp) => (
+                    <SelectItem
+                      key={emp.id}
+                      value={emp.id.toString()}
+                      className="text-white"
+                    >
+                      {emp.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <form
               onSubmit={handleDateFilter}
               className="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4"
@@ -366,6 +421,9 @@ const AllIncomeExpenseReport = () => {
                     Method
                   </TableHead>
                   <TableHead className="text-white print:text-black">
+                    Posted By
+                  </TableHead>
+                  <TableHead className="text-white print:text-black">
                     Description
                   </TableHead>
                   <TableHead className="text-right text-white print:text-black">
@@ -405,6 +463,9 @@ const AllIncomeExpenseReport = () => {
                       className={`print:text-black ${t.type === "Expense" ? "text-red-400" : t.type === "Withdrawal" ? "text-yellow-400" : (methodColor[t.method] ?? methodColor.default)}`}
                     >
                       {t.method}
+                    </TableCell>
+                    <TableCell className="text-white print:text-black">
+                      {t.employee_name || "—"}
                     </TableCell>
                     <TableCell className="text-white print:text-black whitespace-pre-wrap">
                       {t.description}

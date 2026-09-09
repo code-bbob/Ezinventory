@@ -898,10 +898,11 @@ class SalesReportView(APIView):
 class PurchaseReportView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, branch=None):
-        search = request.GET.get('search')
+def get(self, request, branch=None):
+        enterprise = request.user.employee.enterprise
         start_date = request.GET.get('start_date')
         end_date = request.GET.get('end_date')
+        employee = request.GET.get('employee')
         product = request.GET.get('product')
 
         purchases = Purchase.objects.filter(purchase_transaction__enterprise=request.user.employee.enterprise)
@@ -2151,6 +2152,8 @@ class IncomeExpenseReportView(APIView):
         sales = sales.exclude(method='transfer')
         if branch:
             sales = sales.filter(branch=branch)
+        if employee:
+            sales = sales.filter(employee_id=employee)
         list1=[]
         for sale in sales:
             desc = ""
@@ -2169,6 +2172,7 @@ class IncomeExpenseReportView(APIView):
                 'card_amount': sale.card_amount,
                 'fonepay_amount': sale.fonepay_amount,
                 'esewa_amount': sale.esewa_amount,
+                'employee_name': sale.employee.user.name if sale.employee and sale.employee.user else (sale.employee.name if sale.employee else None),
                 'type': 'Sale',
                 'date': sale.date
             })
@@ -2181,6 +2185,8 @@ class IncomeExpenseReportView(APIView):
         orders = Order.objects.filter(enterprise=enterprise, received_date__range=(report_start_date, report_end_date))
         if branch:
             orders = orders.filter(branch=branch)
+        if employee:
+            orders = orders.none()
         for order in orders:
             desc = "Order's Advanced Payment for: "
             for o in order.items.all():
@@ -2192,6 +2198,7 @@ class IncomeExpenseReportView(APIView):
                 'net_amount': order.advance_received,
                 'description': order.description,
                 'method': order.advance_method,
+                'employee_name': None,
                 'type': 'Order',
                 'date': order.received_date
             })
@@ -2213,6 +2220,8 @@ class IncomeExpenseReportView(APIView):
         remaining_payment_orders = Order.objects.filter(enterprise=enterprise, remaining_received_date__range=(report_start_date, report_end_date))
         if branch:
             remaining_payment_orders = remaining_payment_orders.filter(branch=branch)
+        if employee:
+            remaining_payment_orders = remaining_payment_orders.none()
 
         for order in remaining_payment_orders:
             desc = "Order's Remaining Payment for: "
@@ -2225,6 +2234,7 @@ class IncomeExpenseReportView(APIView):
                 'net_amount': order.remaining_received,
                 'description': order.description,
                 'method': order.remaining_received_method,
+                'employee_name': None,
                 'type': 'Order',
                 'date': order.remaining_received_date
             })
@@ -2246,6 +2256,8 @@ class IncomeExpenseReportView(APIView):
         its = IncomeTransaction.objects.filter(enterprise=enterprise, date__range=(report_start_date, report_end_date))
         if branch:
             its = its.filter(branch=branch)
+        if employee:
+            its = its.none()
 
         for it in its:
             list1.append({
@@ -2254,6 +2266,7 @@ class IncomeExpenseReportView(APIView):
                 'net_amount': it.amount,
                 'description': f"Income Transaction: {it.desc}",
                 'method': it.method,
+                'employee_name': None,
                 'date': it.date,
                 'type': 'Income Transaction',
             })
@@ -2269,6 +2282,8 @@ class IncomeExpenseReportView(APIView):
         dts = DebtorTransaction.objects.filter(enterprise=enterprise, date__range=(report_start_date, report_end_date))
         if branch:
             dts = dts.filter(branch=branch)
+        if employee:
+            dts = dts.none()
 
         for dt in dts:
             if dt.method == 'credit':
@@ -2279,6 +2294,7 @@ class IncomeExpenseReportView(APIView):
                 'net_amount': dt.amount,
                 'description': f"Debtor Transaction for {dt.debtor.name}: {dt.desc}",
                 'method': dt.method,
+                'employee_name': None,
                 'date': dt.date,
                 'type': 'Debtor Transaction',
             })
@@ -2310,6 +2326,8 @@ class IncomeExpenseReportView(APIView):
         expenses = Expenses.objects.filter(enterprise=enterprise, date__range=(report_start_date, report_end_date))
         if branch:
             expenses = expenses.filter(branch=branch)
+        if employee:
+            expenses = expenses.filter(employee_id=employee)
         for exp in expenses:
             list1.append({
                 'id': exp.id,
@@ -2317,6 +2335,7 @@ class IncomeExpenseReportView(APIView):
                 'net_amount': -exp.amount,
                 'description': f"{exp.desc}",
                 'method': exp.method,
+                'employee_name': exp.employee.user.name if exp.employee and exp.employee.user else (exp.employee.name if exp.employee else None),
                 'type': 'Expense',
                 'date': exp.date
             })
@@ -2331,6 +2350,8 @@ class IncomeExpenseReportView(APIView):
         withdrawals = Withdrawal.objects.filter(enterprise=enterprise, date__range=(report_start_date, report_end_date))
         if branch:
             withdrawals = withdrawals.filter(branch=branch)
+        if employee:
+            withdrawals = withdrawals.filter(employee_id=employee)
         for wd in withdrawals:
             list1.append({
                 'id': wd.id,
@@ -2338,6 +2359,7 @@ class IncomeExpenseReportView(APIView):
                 'net_amount': -wd.amount,
                 'description': f"Withdrawal by {wd.employee.user.name if wd.employee else 'Unknown'}",
                 'method': 'N/A',
+                'employee_name': wd.employee.user.name if wd.employee and wd.employee.user else (wd.employee.name if wd.employee else None),
                 'type': 'Withdrawal',
                 'date': wd.date
             })
